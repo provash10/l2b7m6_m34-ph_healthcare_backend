@@ -1,0 +1,4 @@
+DATABASE_URL
+postgres://ebb11efd5d6a0fb48a365ce5f20c93e3889ede82ddafcb34a1861148e7b941a3:sk_VjdIRWWIJJo89HCpFKwbn@pooled.db.prisma.io:5432/postgres?sslmode=require
+
+==
