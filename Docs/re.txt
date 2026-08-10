@@ -2,3 +2,26 @@ DATABASE_URL
 postgres://ebb11efd5d6a0fb48a365ce5f20c93e3889ede82ddafcb34a1861148e7b941a3:sk_VjdIRWWIJJo89HCpFKwbn@pooled.db.prisma.io:5432/postgres?sslmode=require
 
 ==
+Linter , formatter 
+what is linting and formatting 
+https://medium.com/@awesomecode/format-code-vs-and-lint-code-95613798dcb3
+https://awesomecode.io/
+
+typescript eslint - https://typescript-eslint.io/ 
+https://www.typescriptlang.org/  -- typescript v7 not support eslint****
+
+download  v7 for eslint or use others
+
+https://prettier.io/
+
+use biome for linting & formatting
+================
+biomejs - https://biomejs.dev/
+npm i -D -E @biomejs/biome
+npx @biomejs/biome init
+
+npm run format:check
+npm run format:fix
+
+npm run lint:check
+npm run lint:fix
