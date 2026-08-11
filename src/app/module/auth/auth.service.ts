@@ -191,18 +191,7 @@ const refreshToken = async (token: string) => {
 	};
 };
 
-const googleLogin = async(payload : IGoogleLoginPayload)=>{
-	// const googleClient = new OAuth2Client({
-	// 	client_id : config.google_client_id
-	// })
-	// const result = await googleClient.verifyIdToken({
-	// 	idToken : payload.idToken
-	// })
-
-	// const googleInfo = result.getPayload();
-
-	// googleInfo
-
+const googleLogin = async (payload: IGoogleLoginPayload) => {
 	let googleIdTokenPayload: TokenPayload | null | undefined = null;
 
 	try {
@@ -216,47 +205,89 @@ const googleLogin = async(payload : IGoogleLoginPayload)=>{
 		throw new Error("Invalid Or Expired Google Id Token");
 	}
 
-	if (!googleIdTokenPayload || !googleIdTokenPayload.email) {
+	if (!googleIdTokenPayload) {
 		throw new Error("Invalid Or Expired Google Id Token");
 	}
 
-	if(!googleIdTokenPayload.email){
-		throw new Error("Google Email Not Found")
+	if (!googleIdTokenPayload.email) {
+		throw new Error("Google Email Not Found");
 	}
 
-	if(!googleIdTokenPayload.name){
-		throw new Error("Google User Name Not Found")
+	if (!googleIdTokenPayload.name) {
+		throw new Error("Google User Name Not Found");
 	}
 
 	const ifPatientExistWithGoogleAuth = await prisma.user.findFirst({
 		where: {
 			email: googleIdTokenPayload.email,
 			role: Role.PATIENT,
-			googleId : googleIdTokenPayload.sub
+			googleId: googleIdTokenPayload.sub,
 		},
 	});
 
 	let user = ifPatientExistWithGoogleAuth;
 
-	if(!user){
-		user = await prisma.user.create({
-			data:{
-				name : googleIdTokenPayload.name,
-				email : googleIdTokenPayload.email,
-				role :Role.PATIENT,
-				googleId : googleIdTokenPayload.sub,
-				authProvider : AuthProvider.GOOGLE,
-				patient : {
-					create : {
-						name : googleIdTokenPayload.name,
-						email : googleIdTokenPayload.email,
-					}
-				}
+	if (!ifPatientExistWithGoogleAuth) {
+		const ifPatientExistWithCredentials = await prisma.user.findFirst({
+			where: {
+				email: googleIdTokenPayload.email,
+				role: Role.PATIENT,
+				authProvider: AuthProvider.CREDENTIAL,
+			},
+		});
+
+		if (ifPatientExistWithCredentials) {
+			if (ifPatientExistWithCredentials.status === UserStatus.BLOCKED) {
+				throw new Error("User Is Blocked");
 			}
-		})
+			if (
+				ifPatientExistWithCredentials.isDeleted ||
+				ifPatientExistWithCredentials.status === UserStatus.DELETED
+			) {
+				throw new Error("User Is Deleted");
+			}
+
+			user = await prisma.user.update({
+				where: {
+					id: ifPatientExistWithCredentials.id,
+				},
+				data: {
+					googleId: googleIdTokenPayload.sub,
+				},
+			});
+		} else {
+			// google register
+			user = await prisma.user.create({
+				data: {
+					name: googleIdTokenPayload.name,
+					email: googleIdTokenPayload.email,
+					role: Role.PATIENT,
+					googleId: googleIdTokenPayload.sub,
+					authProvider: AuthProvider.GOOGLE,
+					emailVerified: true,
+					patient: {
+						create: {
+							name: googleIdTokenPayload.name,
+							email: googleIdTokenPayload.email,
+						},
+					},
+				},
+			});
+		}
 	}
 
-	
+	if (!user) {
+		throw new Error("User Not Found");
+	}
+
+	if (user.status === UserStatus.BLOCKED) {
+		throw new Error("User Is Blocked");
+	}
+
+	if (user.isDeleted || user.status === UserStatus.DELETED) {
+		throw new Error("User Is Deleted");
+	}
+
 	const jwtPayload = {
 		userId: user.id,
 		name: user.name,
@@ -280,7 +311,6 @@ const googleLogin = async(payload : IGoogleLoginPayload)=>{
 		accessToken,
 		refreshToken,
 	};
-
 };
 
 export const AuthService = {
