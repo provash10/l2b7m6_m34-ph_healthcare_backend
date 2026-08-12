@@ -14,7 +14,7 @@ import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
-	const { name, password } = payload;
+	const { name, password, price } = payload;
 	const email = payload.email.trim().toLowerCase();
 
 	const isUserExists = await prisma.user.findUnique({
@@ -29,8 +29,10 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
 
 	const createdUser = await prisma.user.create({
 		data: {
-			name,
-			email,
+			// name,
+			// email,
+			// price,
+			...payload,
 			password: hashedPassword,
 			role: Role.PATIENT,
 			status: UserStatus.ACTIVE,
