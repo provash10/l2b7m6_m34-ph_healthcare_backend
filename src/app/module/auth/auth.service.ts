@@ -14,7 +14,7 @@ import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
-	const { name, password} = payload;
+	const { name, password, patient : patientData} = payload;
 	// if(!name || typeof name !== "string" || name.length<3){
 
 	// }  // muse zod
@@ -41,7 +41,7 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
 			status: UserStatus.ACTIVE,
 			emailVerified: false,
 			patient: {
-				create: { name, email },
+				create: { name, email, contactNumber : patientData?.contactNumber || "" },
 			},
 		},
 		omit: { password: true },

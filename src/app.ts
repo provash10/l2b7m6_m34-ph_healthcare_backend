@@ -36,7 +36,7 @@ app.post("/zod", async (req: Request, res: Response, next:NextFunction) => {
 try {
 		const userZodSchema = z.object({
 			name: z.string(),
-			email : z.email(),
+			email: z.string().email(),
 			age: z.number().optional(),
 			isVerified: z.boolean().optional(),
 			books: z.array(z.string()).optional(),
