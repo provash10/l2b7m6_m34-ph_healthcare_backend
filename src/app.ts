@@ -12,6 +12,7 @@ import { globalErrorHandler } from "./app/middleware/globalErrorHandler";
 import { notFound } from "./app/middleware/notFound";
 import { AuthRoutes } from "./app/module/auth/auth.route";
 import { z } from "zod";
+import { redisClient } from "./app/lib/redis";
 
 const app: Application = express();
 
@@ -31,25 +32,45 @@ app.use(cookieParser());
 
 app.use("/api/v1/auth", AuthRoutes);
 
-app.post("/zod", async (req: Request, res: Response, next:NextFunction) => {
+// app.get("/zod", async (req: Request, res: Response, next:NextFunction) => {
+	
+// try {
+// 		const userZodSchema = z.object({
+// 			name: z.string(),
+// 			email: z.string().email(),
+// 			age: z.number().optional(),
+// 			isVerified: z.boolean().optional(),
+// 			books: z.array(z.string()).optional(),
+// 		});
+// 	const payload = req.body;
+
+// 	const result = userZodSchema.parse(payload);
+// 	 console.log(result);
+	 
+// 	res.status(httpStatus.OK).json({
+// 		success: true,
+// 		message: "Welcome to PH Healthcare System Backend",
+// 		data : result
+// 	});
+// } catch (error) {
+// 	console.log(error)
+// 	next(error)
+// }
+
+// });
+
+// Basic route
+app.get("/test", async (req: Request, res: Response, next:NextFunction) => {
 	
 try {
-		const userZodSchema = z.object({
-			name: z.string(),
-			email: z.string().email(),
-			age: z.number().optional(),
-			isVerified: z.boolean().optional(),
-			books: z.array(z.string()).optional(),
-		});
-	const payload = req.body;
-
-	const result = userZodSchema.parse(payload);
-	 console.log(result);
+		await redisClient.set("forgot-password-otp:patient1@gmail.com", "123456", {
+			EX: 60
+		})
 	 
 	res.status(httpStatus.OK).json({
 		success: true,
 		message: "Welcome to PH Healthcare System Backend",
-		data : result
+		data : null
 	});
 } catch (error) {
 	console.log(error)
@@ -58,7 +79,6 @@ try {
 
 });
 
-// Basic route
 app.get("/", async (req: Request, res: Response) => {
 	res.status(httpStatus.OK).json({
 		success: true,
