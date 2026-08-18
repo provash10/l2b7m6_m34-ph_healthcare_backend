@@ -167,6 +167,39 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 	});
 });
 
+const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+	
+	const payload = req.body;
+	const result = await AuthService.forgotPassword(payload)
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "New tokens generated successfully",
+		data: {
+
+			
+		},
+	});
+});
+
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
+	
+	const payload = req.body;
+	const result = await AuthService.forgotPassword(payload)
+
+	
+
+	sendResponse(res, {
+		statusCode: httpStatus.OK,
+		success: true,
+		message: "New tokens generated successfully",
+		data: {
+			
+		},
+	});
+});
+
 
 
 export const AuthController = {
@@ -174,5 +207,7 @@ export const AuthController = {
 	loginUser,
 	getMe,
 	refreshToken,
-	googleLogin
+	googleLogin,
+	forgotPassword,
+	resetPassword
 };
