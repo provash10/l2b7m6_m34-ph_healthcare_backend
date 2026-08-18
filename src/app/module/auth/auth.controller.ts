@@ -28,21 +28,9 @@ import { PatientValidation } from "./auth.validation";
 // });
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
-	// const payload = req.body;
+	const payload = req.body;
 
-	const payload = PatientValidation.PatientRegistrationZodSchema.safeParse(req.body);
-
-	if (!payload.success) {
-		console.log(payload.error);
-		console.log(payload.error.issues);
-		let errorMessage = "";
-		payload.error.issues.forEach((issue) => {
-			errorMessage = errorMessage + ", " + issue.message;
-		});
-		throw new Error(errorMessage);
-	}
-
-	const result = await AuthService.registerPatient(payload.data);
+	const result = await AuthService.registerPatient(payload);
 
 	const { accessToken, refreshToken, user, patient } = result;
 
