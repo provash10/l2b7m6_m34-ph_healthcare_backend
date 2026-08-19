@@ -6,7 +6,12 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		"includes": [
+			"**",
+			"!src/generated",
+			"!src/app/templates"
+		]
 	},
 	"formatter": {
 		"enabled": true,
@@ -16,20 +21,25 @@
 		"enabled": true,
 		"rules": {
 			"preset": "recommended",
-			"suspicious" : {
-				"noExplicitAny" : "warn"
+			"suspicious": {
+				"noExplicitAny": "warn"
 			},
-			"complexity" : {
-				"noCommaOperator" : "info"
+			"complexity": {
+				"noCommaOperator": "info"
 			},
-			"correctness" : {
-				"noUnusedFunctionParameters" : "off"
+			"correctness": {
+				"noUnusedFunctionParameters": "off"
 			},
-			"style" : {
-				"noNonNullAssertion" : "info",
-				"useNodejsImportProtocol" : "info"
+			"style": {
+				"noNonNullAssertion": "info",
+				"useNodejsImportProtocol": "info"
 			}
-		}
+		},
+		"includes": [
+			"**",
+			"!src/generated",
+			"!src/app/templates"
+		]
 	},
 	"javascript": {
 		"formatter": {
