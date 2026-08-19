@@ -18,6 +18,7 @@ import crypto from "crypto";
 import { redisClient } from "../../lib/redis";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
+import { transporter } from "../../lib/nodemailer";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
 	const { name, password, patient : patientData} = payload;
@@ -359,6 +360,15 @@ const forgotPassword = async(payload : IForgotPasswordPayload) => {
 	await redisClient.set(key, otp, {
 		EX: 5 * 60,
 	});
+
+	//nodemailer
+	await transporter.sendMail({
+		from : config.email_sender,
+		to : isUserExist.email,
+		subject : "Forgot Password",
+		// text : `Your OTP is ${otp}`,
+		html:`<h1>Your OTP is ${otp}</h1>`
+	})
 }
 
 const resetPassword = async(payload : IResetPasswordPayload)  => {
@@ -412,6 +422,15 @@ const resetPassword = async(payload : IResetPasswordPayload)  => {
 	});
 
 	await redisClient.del([key]);
+
+	//nodemailer
+	await transporter.sendMail({
+		from : config.email_sender,
+		to : isUserExist.email,
+		subject : "Password Changed",
+		// text : `Your OTP is ${otp}`,
+		html:`<h1>Your Password Is Changed Successfully</h1>`
+	})
 }
 
 export const AuthService = {
