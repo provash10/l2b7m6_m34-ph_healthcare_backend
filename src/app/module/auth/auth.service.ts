@@ -5,13 +5,19 @@ import config from "../../config";
 import { prisma } from "../../lib/prisma";
 import { jwtUtils } from "../../utils/jwt";
 import type {
+	IForgotPasswordPayload,
 	IGoogleLoginPayload,
 	ILoginUserPayload,
 	IRegisterPatientPayload,
 	IRequestUser,
+	IResetPasswordPayload,
 } from "./auth.interface";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth";
+import crypto from "crypto";
+import { redisClient } from "../../lib/redis";
+import AppError from "../../errors/AppError";
+import httpStatus from "http-status";
 
 const registerPatient = async (payload: IRegisterPatientPayload) => {
 	const { name, password, patient : patientData} = payload;
@@ -318,9 +324,44 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 	};
 };
 
-const forgotPassword = (payload : any) = {}
+const forgotPassword = async(payload : IForgotPasswordPayload) => {
+	const {email} = payload;
 
-const resetPassword = (payload : any)  = {}
+	const isUserExist = await prisma.user.findUnique({
+		where : {
+			email
+		}
+	});
+	if(!isUserExist){
+		throw new AppError(httpStatus.NOT_FOUND, "User Does Not Exist!");
+	};
+
+	if(isUserExist.status==="BLOCKED"){
+		throw new AppError(httpStatus.FORBIDDEN, "User is Blocked");
+	}
+
+	if(!isUserExist.emailVerified){
+		throw new AppError(httpStatus.BAD_REQUEST, "User Not Verified.");
+	}
+
+	if(isUserExist.isDeleted || isUserExist.status ==="DELETED"){
+		throw new AppError(httpStatus.FORBIDDEN, "User is Deleted");
+	}
+
+	if(isUserExist.googleId && isUserExist.authProvider ==="GOOGLE"){
+		throw new AppError(httpStatus.BAD_REQUEST, "User has Account with Google");
+	}
+
+	const otp = crypto.randomInt(100000, 1000000).toString();
+
+	const key = `forgot-password-otp:${isUserExist.email}`
+
+	await redisClient.set(key, otp, {
+		EX: 5 * 60,
+	});
+}
+
+const resetPassword = (payload : IResetPasswordPayload)  => {}
 
 export const AuthService = {
 	registerPatient,

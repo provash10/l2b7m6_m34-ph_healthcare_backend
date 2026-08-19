@@ -48,9 +48,12 @@ export const globalErrorHandler = async (
 		errorMessage = "Error occurred during query execution";
 	} else if (err instanceof Error) {
 		errorMessage = err.message;
+		if ("statusCode" in err && typeof (err as any).statusCode === "number") {
+			statusCode = (err as any).statusCode;
+		}
 	}
 
-	res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+	res.status(statusCode).json({
 		success: false,
 		statusCode: statusCode || httpStatus.INTERNAL_SERVER_ERROR,
 		name:
