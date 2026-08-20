@@ -11,6 +11,7 @@ import type {
 	IRegisterPatientPayload,
 	IRequestUser,
 	IResetPasswordPayload,
+	IVerifyEmailPayload,
 } from "./auth.interface";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { googleClient } from "../../lib/googleAuth";
@@ -67,7 +68,7 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
 	const templateData = {
 		name,
 		email,
-		otpValue,
+		otp: otpValue,
 		expirationMinutes: expirationSeconds / 60,
 	};
 
@@ -129,6 +130,87 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
  */	
 
 };
+
+const verifyPatientEmail = async (payload : IVerifyEmailPayload) => {
+	const otp = String(payload.otp || "").trim();
+	const email = payload.email.trim().toLowerCase();
+
+	const isUserExist = await prisma.user.findUnique({
+		where: { email },
+	});
+
+	if (isUserExist) {
+		throw new AppError(httpStatus.BAD_REQUEST, "User with this email already exists");
+	}
+	
+	const otpKey = `patient-registration-otp:${email}`
+
+	const redisOtp = await redisClient.get(otpKey)
+
+	if(!redisOtp){
+		throw new AppError(httpStatus.BAD_REQUEST, "Invalid or Expired OTP");
+	}
+	if(redisOtp !== otp){
+		throw new AppError(httpStatus.BAD_REQUEST, "OTP Does Not Match");
+	}
+
+	await redisClient.del(otpKey)
+
+	const patientRegistrationKey = `patient-registration-data:${email}`
+	const redisPatientData = await redisClient.get(patientRegistrationKey)
+	if(!redisPatientData){
+		throw new AppError(httpStatus.BAD_REQUEST, "Patient registration data not found or expired. Please register again.");
+	}
+	const patientPayload : IRegisterPatientPayload = JSON.parse(redisPatientData);
+
+	//comment theke
+	const createdUser = await prisma.user.create({
+		data: {
+			name: patientPayload.name,
+			email:patientPayload.email,
+			password: patientPayload.password,
+			role: Role.PATIENT,
+			status: UserStatus.ACTIVE,
+			emailVerified: true,
+			patient: {
+				create: {
+					name: patientPayload.name,
+					email: patientPayload.email,
+					contactNumber: patientPayload?.patient?.contactNumber || "",
+				},
+			},
+		},
+		omit: { password: true },
+		include: { patient: true },
+	});
+
+	const { patient, ...user } = createdUser;
+	const jwtPayload = {
+		userId: user.id,
+		name: user.name,
+		email: user.email,
+		role: user.role,
+	};
+
+	const accessToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_access_secret,
+		config.jwt_access_expires_in as SignOptions,
+	);
+
+	const refreshToken = jwtUtils.createToken(
+		jwtPayload,
+		config.jwt_refresh_secret,
+		config.jwt_refresh_expires_in as SignOptions,
+	);
+
+	return {
+		user,
+		patient,
+		accessToken,
+		refreshToken,
+	};
+}
 
 const loginUser = async (payload: ILoginUserPayload) => {
 	const { password } = payload;
@@ -506,5 +588,6 @@ export const AuthService = {
 	refreshToken,
 	googleLogin,
 	forgotPassword,
-	resetPassword
+	resetPassword,
+	verifyPatientEmail
 };
