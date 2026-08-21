@@ -36,4 +36,7 @@ https://cloud.google.com/ >>> console >>>
 client id - YOUR_GOOGLE_CLIENT_ID
 client secret - YOUR_GOOGLE_CLIENT_SECRET
 
+multer and cloudinary
+https://medium.com/@jatinumamtora/uploading-images-directly-to-cloudinary-from-a-form-in-node-js-6f3a087481b0
+
 
