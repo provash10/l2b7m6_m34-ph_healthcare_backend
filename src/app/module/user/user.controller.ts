@@ -12,13 +12,17 @@ const uploadProfileImage = catchAsync(async (req: Request, res: Response) => {
 
     const userId = req.user?.userId;
 
+    if (!userId) {
+        throw new Error("Unauthorized access. User ID missing.");
+    }
+
     const result = await UserServices.uploadProfileImage(req.file.buffer, userId);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
         success: true,
         message: "Profile image uploaded successfully",
-        data: null,
+        data: result
     });
 });
 
