@@ -1,0 +1,14 @@
+bkash developer portal
+1. https://developer.bka.sh/
+2. https://merchantportal.bkash.com/login
+
+
+1. https://developer.bka.sh/
+Tokenized Checkout (Available Now) >>>
+
+>>>.
+39-5 Setting Up Bkash In Project
+Google >>> bkash sandbox credentials
+>>> https://onecodesoft.com/blogs/bkash-sandbox-credentials-for-payment-gateway-testing
+
+google > jwt decode >>>https://jwt.ms/ >>> access token or refresh token check

@@ -15,6 +15,7 @@ import { AuthRoutes } from "./app/module/auth/auth.route";
 import { z } from "zod";
 import { redisClient } from "./app/lib/redis";
 import { UserRoutes } from "./app/module/user/user.route";
+import { getBkashIdToken } from "./app/lib/bkash";
 
 const app: Application = express();
 
@@ -66,7 +67,11 @@ app.use("/api/v1/user", UserRoutes);
 app.get("/test", async (req: Request, res: Response, next:NextFunction) => {
 	
 try {
-	const otp = crypto.randomInt(100000, 1000000).toString();
+
+	const grantIdTokenResult = await getBkashIdToken();
+	console.log(grantIdTokenResult);
+
+	// const otp = crypto.randomInt(100000, 1000000).toString();
 	
 		// await redisClient.set("forgot-password-otp:patient1@gmail.com", "123456", {
 		// 	EX: 60
@@ -75,12 +80,14 @@ try {
 	res.status(httpStatus.OK).json({
 		success: true,
 		message: "Welcome to PH Healthcare System Backend",
-		data: otp,
+		data: null,
 	});
 } catch (error) {
 	console.log(error)
 	next(error)
 }
+
+
 
 });
 
