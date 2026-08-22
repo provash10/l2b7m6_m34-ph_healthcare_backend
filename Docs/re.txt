@@ -39,4 +39,6 @@ client secret - YOUR_GOOGLE_CLIENT_SECRET
 multer and cloudinary
 https://medium.com/@jatinumamtora/uploading-images-directly-to-cloudinary-from-a-form-in-node-js-6f3a087481b0
 
-
+cloudinary image delete
+https://www.google.com/search?q=cloiudinary+image+delete&oq=cloiudinary+image+delete&gs_lcrp=EgZjaHJvbWUyBggAEEUYOTIICAEQABgWGB4yCAgCEAAYFhgeMggIAxAAGBYYHjIICAQQABgWGB4yCAgFEAAYFhgeMggIBhAAGBYYHjIICAcQABgWGB4yCggIEAAYCBgNGB7SAQg5MzMyajBqN6gCCLACAfEFjtFBq3w6KnDxBY7RQat8Oipw&sourceid=chrome&source=chrome.ob&ie=UTF-8
+Method 2: Programmatically (Backend SDKs)
