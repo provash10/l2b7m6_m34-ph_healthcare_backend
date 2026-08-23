@@ -9,7 +9,7 @@ const bookAppointment = async () =>{
     }
 
     console.log({bkashIdToken});
-    
+
     const bkashCreatePaymentResponse = await fetch(`${config.bkash_base_url}/tokenized/checkout/create`,{
         method : "POST",
         headers: {
@@ -20,7 +20,8 @@ const bookAppointment = async () =>{
                 },
                 body: JSON.stringify({
                     // agreementID: 'TokenizedMerchant01L3IKB6H1565072174986', // appointment id
-                    mode: "0001",
+                    // mode: "0001", //not support
+                    mode: "0011",    //0011 support
                     payerReference: "01723888888", //user email or phone number
                     callbackURL: `${config.bkash_callback_url}/appointment/book-appointment/payment/callback`,
                     // merchantAssociationInfo: "MI05MID54RF091234560ne", //optional
@@ -37,6 +38,13 @@ const bookAppointment = async () =>{
     return bkashCreatePaymentResult;
 }
 
+const bookAppointmentCallback = () => {
+    return {
+        success : true
+    }
+}
+
 export const AppointmentServices = {
-    bookAppointment
+    bookAppointment,
+    bookAppointmentCallback
 }

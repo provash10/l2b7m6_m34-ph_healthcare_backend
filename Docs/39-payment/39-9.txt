@@ -1,0 +1,50 @@
+Computer Solution@DESKTOP-21VQR3R MINGW64 /c/Projects/1. nl/L2B7-Project-PH-Healthcare-Backend (main)
+$ npm run dev
+
+> project-ph-healthcare-system-backend@1.0.0 dev
+> tsx watch src/server.ts
+
+◇ injected env (36) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+Connected to the database successfully.
+Redis Connected Successfully !!!
+Nodemailer Connected Successfully
+(node:5416) Warning: SECURITY WARNING: The SSL modes 'prefer', 'require', and 'verify-ca' are treated as aliases for 'verify-full'.
+In the next major version (pg-connection-string v3.0.0 and pg v9.0.0), these modes will adopt standard libpq semantics, which have weaker security guarantees.
+
+To prepare for this change:
+- If you want the current behavior, explicitly use 'sslmode=verify-full'
+- If you want libpq compatibility now, use 'uselibpqcompat=true&sslmode=require'
+
+See https://www.postgresql.org/docs/current/libpq-ssl.html for libpq SSL mode definitions.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Super Admin Already Exists
+Tester Admin Already Exists!
+Tester Doctor Already Exists!
+Server is running on port 5000
+{
+  bkashIdToken: 'eyJraWQiOiJvTVJzNU9ZY0wrUnRXQ2o3ZEJtdlc5VDBEcytrckw5M1NzY0VqUzlERXVzPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJlODNlMDkwMC1jY2ZmLTQzYTctODhiNy0wNjE5NDJkMTVmOTYiLCJhdWQiOiI2cDdhcWVzZmljZTAxazltNWdxZTJhMGlhaCIsImV2ZW50X2lkIjoiMTM4NGVjNmUtYTRiNy00YWU4LWFkODMtNmZiNjIyNTI0NzkwIiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE3ODc0NjQyNTYsImlzcyI6Imh0dHBzOi8vY29nbml0by1pZHAuYXAtc291dGhlYXN0LTEuYW1hem9uYXdzLmNvbS9hcC1zb3V0aGVhc3QtMV9yYTNuUFkzSlMiLCJjb2duaXRvOnVzZXJuYW1lIjoic2FuZGJveFRva2VuaXplZFVzZXIwMiIsImV4cCI6MTc4NzQ5Nzc1OCwiaWF0IjoxNzg3NDk0MTU4fQ.BYG9bz8xNv86c3eV3jIHWzWBKb2eZV2IYXeCT5lZP3YF0bzKeH0k_k8fiovH5QgvQUtEVCnZZ1GprB3cyWiMV59ZZ_JDqjWQI-8ZAL8PMGr1tBoN4xp_1GGacO3SVhlxwac0rPJOXixw6UGxY2JaIFH7TLSxFcxC_SZI_z1WUONUWEFcG5XmdNjB0ivaWjt5tGtLnBoAB8e74w0gWFshYoLucb15tOODz14Fz65ZF9vYk9hKiGqntd9Hl9g-1KEhBOWyjJ9lbhcXHpLtczFdLMbW75D_2MpP7LxnGZqdntakAqmP7M-8ENVC4YE98cgeVpNJut3SNgnABmkqg1lLlQ',
+  bkashIdTokenTTL: 3248,
+  bkashRefreshToken: 'eyJjdHkiOiJKV1QiLCJlbmMiOiJBMjU2R0NNIiwiYWxnIjoiUlNBLU9BRVAifQ.BeWIngCXWjDU-_mppBoaUHztRePaThALm-jpaFyFdamXw0gsoNEteUf_SBcMCcFTvSTIePqgbVtQ5K6nyibEHU1wWvvO-kgoALi02xrxmQp7_zgv1Dq9cYpLOO-s-DFMHf_GkETNkqpmLS74d0huxVEh4uADGHIfFjkK6P2nmhu-pLRZBuc_pUek0jHXUq_JxsXjpUpl15YBfP3a1ULtd0RQe8BdFiuab41jpNTjDlz0lUXC-LaXFtYiCwanvZrSAwOz0GcZiBHqI29xlIH0VqfWaMxz4RZsDN_EaLOwPlm2ZHzm4iuL5dJ4XVVD8nkWe0vBbEyJclYMNSsBArYH1A.8Cw6rv3OQL_xIKWs.0zK02ZYvYggdf14GFdOqqhX4P_3JW2jM3DFkGHYXCsy4O2TuItXYRd05np1WUIpLmGpRRsFiEzua9lZVlDiu-BxyVBPg4N8jMTE7PeD08AtULejSs2VJn4EdmjTpdj45xpc-AM5PY6huMZ9bSjaaZGfY-M4OYr-R1AvDmKvPV2sPXHzEtNF1kHcTmUIvKPH4e2yB3z_8FVyZLEle4l6eTrep08zx4E3A5gdM82VytlRhoitFcdPk8ej_X0Z5auUfPgfZcGZEhztHgxMz5niLzXBVJyCVJyKgO72BBnecVIYUtKi9q_Zwyh3cOw_P6tqATiXSFciYQ8PFnuiBUbsK7BaCzUl1b_7IavKpPQiDhBq9T2zTTazCDPPgEnguflsFlr1KRHf551JJNwSwyFNqkXzD9n2HdDALo-NbLJ6pGa_OKyAdFkJotvRC_owR5ku4yI21fOLlb0WDIKS4d7SUam-MpGzwWa9uv1lmoWPwxHNZpzAr33Vb3Staao3lF8uf82gvMLCwk3WnHyWEcLTJxsFK8qqwAxJ8XHufnTCOr_vQl5Cvo2mIcGI2pmF4c8iqvzMAxtzmEX5ITzsMokDuOUtlScO3nbmojDFiJjCq_6fwKl3j6CmFS5rtSNk37AHH8q7bVXViOqHH8_XwgPYHmny7Kk07ZJe5VtEcL2jJcoQawgV7UiaGd-_Zk1u7j-xd94HnhWLt08iTD01o3KR_3i6PHtkr_o4XvCXBY12sIDNS-xlL5Hf4Isohe-fx148-fV5JvuKES7aDxq_xTuvpetwBOYRTSa8h8A8f10aVyPEcKwQBusvp9z1A4EELvpJFet82yNI_fndp6XuC6AD8las_h6v7QbfxDkFCUae2S32PMdYJ6XjjNS60A2g0BtxFj5eDreZoMkVI2tjT6z0CaGb-69KY1qs2ZuU6sjn0ws6Md8CsxYhTORjyrliV3LBEoFnCw5NFhLTWjFjzLvectFdQbkLtSvVbWlepMJVnub9IMpcpNW47eV5P6dOeiGXnZnpLdaP0QW6miesE9I87B9B_RQcyIkNToT0qgwjpXE_o3d_467ffCZGXCdFWJMq42TjwaI5ESjNJLAk3osqmlUyGuvA3vUc3vq-jpnhgWwCil7uIBcuIYvqvSEPezRKvHvUIZZEQplUSWnNHqXVck7nS8V45G-2UzGtAQ1mUK4Kv7crbm4vgBWG4LLGx0YM3EW2umuX_qO-9GAIP86ifZvDN_PJryNK8gjTCY2LszM8FBhmSee6LvIFb3A85u20Hpp2oZXjCPXYFyozKbN-LI5Tpb83aDViErD3eqbuDom3nag.cJ_259hUiCw638g12Tqclw',
+  bkashRefreshTokenTTL: 2388946
+}
+{
+  bkashIdToken: 'eyJraWQiOiJvTVJzNU9ZY0wrUnRXQ2o3ZEJtdlc5VDBEcytrckw5M1NzY0VqUzlERXVzPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJlODNlMDkwMC1jY2ZmLTQzYTctODhiNy0wNjE5NDJkMTVmOTYiLCJhdWQiOiI2cDdhcWVzZmljZTAxazltNWdxZTJhMGlhaCIsImV2ZW50X2lkIjoiMTM4NGVjNmUtYTRiNy00YWU4LWFkODMtNmZiNjIyNTI0NzkwIiwidG9rZW5fdXNlIjoiaWQiLCJhdXRoX3RpbWUiOjE3ODc0NjQyNTYsImlzcyI6Imh0dHBzOi8vY29nbml0by1pZHAuYXAtc291dGhlYXN0LTEuYW1hem9uYXdzLmNvbS9hcC1zb3V0aGVhc3QtMV9yYTNuUFkzSlMiLCJjb2duaXRvOnVzZXJuYW1lIjoic2FuZGJveFRva2VuaXplZFVzZXIwMiIsImV4cCI6MTc4NzQ5Nzc1OCwiaWF0IjoxNzg3NDk0MTU4fQ.BYG9bz8xNv86c3eV3jIHWzWBKb2eZV2IYXeCT5lZP3YF0bzKeH0k_k8fiovH5QgvQUtEVCnZZ1GprB3cyWiMV59ZZ_JDqjWQI-8ZAL8PMGr1tBoN4xp_1GGacO3SVhlxwac0rPJOXixw6UGxY2JaIFH7TLSxFcxC_SZI_z1WUONUWEFcG5XmdNjB0ivaWjt5tGtLnBoAB8e74w0gWFshYoLucb15tOODz14Fz65ZF9vYk9hKiGqntd9Hl9g-1KEhBOWyjJ9lbhcXHpLtczFdLMbW75D_2MpP7LxnGZqdntakAqmP7M-8ENVC4YE98cgeVpNJut3SNgnABmkqg1lLlQ'
+}
+{
+  bkashCreatePaymentResult: {
+    paymentID: 'TR0011qIvVxTh1787494511741',
+    bkashURL: 'https://sandbox.payment.bkash.com/?paymentId=TR0011qIvVxTh1787494511741&hash=W8O6S4N39EnWhZQj5Y7XmsCr3*xeZ_r2KMI2g)XFQJ.Sj_Xs_agXV!4oXaR!9(Vk(t.p6Oc2B0xzzK*tfmxt2i9BMm!yChJ9fZXL1787494511742&mode=0011&apiVersion=v1.2.0-beta/',
+    callbackURL: 'http://localhost:5000/api/v1/appointment/book-appointment/payment/callback',
+    successCallbackURL: 'http://localhost:5000/api/v1/appointment/book-appointment/payment/callback?paymentID=TR0011qIvVxTh1787494511741&status=success&signature=itXxd5Z4Uv',
+    failureCallbackURL: 'http://localhost:5000/api/v1/appointment/book-appointment/payment/callback?paymentID=TR0011qIvVxTh1787494511741&status=failure&signature=itXxd5Z4Uv',
+    cancelledCallbackURL: 'http://localhost:5000/api/v1/appointment/book-appointment/payment/callback?paymentID=TR0011qIvVxTh1787494511741&status=cancel&signature=itXxd5Z4Uv',
+    amount: '1200',
+    intent: 'sale',
+    currency: 'BDT',
+    paymentCreateTime: '2026-08-23T20:15:11:741 GMT+0600',
+    transactionStatus: 'Initiated',
+    merchantInvoiceNumber: 'Inv0124',
+    statusCode: '0000',
+    statusMessage: 'Successful'
+  }
+}
