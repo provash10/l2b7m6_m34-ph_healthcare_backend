@@ -48,3 +48,33 @@ Server is running on port 5000
     statusMessage: 'Successful'
   }
 }
+
+
+Bkash
+01770618575
+123456
+pass- 12121
+
+
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "User profile fetched successfully",
+  "data": {
+    "paymentID": "TR0011FyI5SSv1787499327964",
+    "trxID": "DHN30PB26J",
+    "transactionStatus": "Completed",
+    "amount": "1200",
+    "currency": "BDT",
+    "intent": "sale",
+    "paymentExecuteTime": "2026-08-23T21:36:23:701 GMT+0600",
+    "merchantInvoiceNumber": "Inv1",
+    "payerType": "Customer",
+    "payerReference": "01723888888",
+    "customerMsisdn": "01770618575",
+    "payerAccount": "01770618575",
+    "maxRefundableAmount": "1200",
+    "statusCode": "0000",
+    "statusMessage": "Successful"
+  }
+}
