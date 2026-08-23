@@ -28,7 +28,7 @@ const bookAppointment = async () =>{
                     amount: "1200",
                     currency: "BDT",
                     intent: "sale",
-                    merchantInvoiceNumber: "Inv1" //appointment id
+                    merchantInvoiceNumber: "Inv3" //appointment id
                 })
     });
 
@@ -68,7 +68,39 @@ const bookAppointmentCallback = async(query : Record<string,any>) => {
 })
 
 const exexutedPaymentResult = await executedPaymentResponse.json();
-return exexutedPaymentResult;
+console.log({executedPaymentResponse})
+
+if(status === "success"){
+    return {
+        exexutedPaymentResult,
+        // transactionId : exexutedPaymentResult.trxID,
+        redirectUrl : `${config.frontend_url}/dashboard/my-appointments?status=success`
+    }
+}
+
+if(status === "failure"){
+    return {
+        exexutedPaymentResult,
+        // transactionId : exexutedPaymentResult.trxID,
+        redirectUrl : `${config.frontend_url}/dashboard/my-appointments?status=failure`
+    }
+}
+
+if(status === "cancel"){
+    return {
+        exexutedPaymentResult,
+        // transactionId : exexutedPaymentResult.trxID,
+        redirectUrl : `${config.frontend_url}/dashboard/my-appointments?status=cancel`
+    }
+}
+
+return {
+    exexutedPaymentResult,
+        // transactionId : exexutedPaymentResult.trxID,
+        redirectUrl : `${config.frontend_url}/dashboard/my-appointments`
+}
+
+// return exexutedPaymentResult;
 
     // return {
     //     success : true

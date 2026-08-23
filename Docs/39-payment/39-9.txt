@@ -78,3 +78,5 @@ pass- 12121
     "statusMessage": "Successful"
   }
 }
+
+http://localhost:3000/dashboard/my-appointments?status=failure
