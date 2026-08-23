@@ -1,14 +1,13 @@
-import { NextFunction, Request, Response, Router } from "express";
-import { Role } from "../../../generated/prisma/enums";
-import { auth } from "../../middleware/checkAuth";
-import { AuthController } from "./auth.controller";
-import { UserValidation } from "./auth.validation";
-import { catchAsync } from "../../utils/catchAsync";
-import { validateRequest } from "../../middleware/validateRequest";
+import { Router } from "express";
 import { AppointmentController } from "./appointment.controller";
 
 const router = Router();
 
-router.post("/book-appointment", AppointmentController.bookAppointment) 
+router.post("/book-appointment", AppointmentController.bookAppointment);
+router.post("/bok-appointment", AppointmentController.bookAppointment);
+
+// book appointment callback url
+router.get("/book-appointment/payment/callback", () => {});
 
 export const AppointmentRoutes = router;
+
