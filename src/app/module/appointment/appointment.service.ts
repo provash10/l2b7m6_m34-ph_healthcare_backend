@@ -1,8 +1,17 @@
+import { AppointmentStatus } from "../../../generated/prisma/enums"
 import config from "../../config"
 import { getBkashIdToken } from "../../lib/bkash"
+import { prisma } from "../../lib/prisma"
+import { RequestUser } from "../../middleware/checkAuth"
 
-const bookAppointment = async () =>{
-    //business logic
+const bookAppointment = async (payload : any, user : RequestUser) => {
+    const transactionResult = await prisma.$transaction(async(tx)=>{
+        //business logic
+        const appointment = await tx.appointment.create({
+            data : {
+                status : AppointmentStatus.PENDING
+            }
+        })
     const bkashIdToken = await getBkashIdToken();
     if(!bkashIdToken){
         throw new Error("No Bkash Access Token Found")
@@ -22,20 +31,39 @@ const bookAppointment = async () =>{
                     // agreementID: 'TokenizedMerchant01L3IKB6H1565072174986', // appointment id
                     // mode: "0001", //not support
                     mode: "0011",    //0011 support
-                    payerReference: "01723888888", //user email or phone number
+                    // payerReference: "01723888888", //user email or phone number
+                    payerReference: user.email, //user email or phone number
                     callbackURL: `${config.bkash_callback_url}/appointment/book-appointment/payment/callback`,
                     // merchantAssociationInfo: "MI05MID54RF091234560ne", //optional
                     amount: "1200",
                     currency: "BDT",
                     intent: "sale",
-                    merchantInvoiceNumber: "Inv3" //appointment id
+                    // merchantInvoiceNumber: "Inv3" //appointment id
+                    merchantInvoiceNumber: appointment.id
                 })
     });
 
     const bkashCreatePaymentResult = await bkashCreatePaymentResponse.json();
+    
+    //payment model create
+     await tx.payment.create({
+        data:{
+            merchanInvoiceNumber: bkashCreatePaymentResult.merchantInvoiceNumber,
+            appointmentId : appointment.id,
+            amount : "1200",
+            gatewayResponse : bkashCreatePaymentResult,
+            bkashPaymentId : bkashCreatePaymentResult.paymentID,
+            payerReference : user.email,
+        }
+    })
+
     console.log({bkashCreatePaymentResult})
 
-    return bkashCreatePaymentResult;
+    // return bkashCreatePaymentResult;
+    return bkashCreatePaymentResult.bkashURL;
+    })
+
+    return transactionResult
 }
 
 const bookAppointmentCallback = async(query : Record<string,any>) => {

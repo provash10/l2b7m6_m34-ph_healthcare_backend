@@ -5,7 +5,10 @@ import httpStatus from "http-status";
 import { AppointmentServices } from "./appointment.service";
 
 const bookAppointment = catchAsync(async (req: Request, res: Response) => {
-    const result = await AppointmentServices.bookAppointment();
+    const paylaod = req.body;
+    const user = req.user!
+
+    const result = await AppointmentServices.bookAppointment(paylaod, user);
 
     sendResponse(res, {
         statusCode: httpStatus.OK,
