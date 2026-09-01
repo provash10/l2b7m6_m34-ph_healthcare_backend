@@ -1,4 +1,4 @@
-import { AppointmentStatus } from "../../../generated/prisma/enums"
+import { AppointmentStatus, PaymentStatus } from "../../../generated/prisma/enums"
 import config from "../../config"
 import { getBkashIdToken } from "../../lib/bkash"
 import { prisma } from "../../lib/prisma"
@@ -67,7 +67,8 @@ const bookAppointment = async (payload : any, user : RequestUser) => {
 }
 
 const bookAppointmentCallback = async(query : Record<string,any>) => {
-    const paymentId = query.paymentID
+   const transactionResult = await prisma.$transaction(async(tx)=>{
+     const paymentId = query.paymentID
     if(!paymentId){
         throw new Error("Payment Id is Missing")
     }
@@ -99,33 +100,77 @@ const exexutedPaymentResult = await executedPaymentResponse.json();
 console.log({executedPaymentResponse})
 
 if(status === "success"){
+    await tx.appointment.update({
+        where : {
+            id : exexutedPaymentResult.marchantinvoiceNumber
+        },
+        data : {
+            status : AppointmentStatus.CONFIRMED
+        }
+    })
+
+    // 2nd part
+    await tx.payment.update({
+        where :{
+            appointmentId : exexutedPaymentResult.marchantinvoiceNumber,
+            bkashPaymentId : paymentId
+        },
+        data : {
+            status: PaymentStatus.PAID,
+            bkashTrxId: exexutedPaymentResult.trxID,
+            paidAt:exexutedPaymentResult.paymentExecuteTime,
+            gatewayResponse : exexutedPaymentResult
+        }
+    })
+
     return {
-        exexutedPaymentResult,
+        // exexutedPaymentResult,
         // transactionId : exexutedPaymentResult.trxID,
         redirectUrl : `${config.frontend_url}/dashboard/my-appointments?status=success`
     }
-}
+}else if(status === "failure"){
+    await tx.payment.update({
+        where :{
+            // appointmentId : exexutedPaymentResult.marchantinvoiceNumber,
+            bkashPaymentId : paymentId
+        },
+        data : {
+            status: PaymentStatus.FAILED,
+           
+            gatewayResponse : exexutedPaymentResult
+        }
+    })
 
-if(status === "failure"){
     return {
-        exexutedPaymentResult,
+        // exexutedPaymentResult,
         // transactionId : exexutedPaymentResult.trxID,
         redirectUrl : `${config.frontend_url}/dashboard/my-appointments?status=failure`
     }
 }
 
-if(status === "cancel"){
+else if(status === "cancel"){
+    await tx.payment.update({
+        where :{
+            // appointmentId : exexutedPaymentResult.marchantinvoiceNumber,
+            bkashPaymentId : paymentId
+        },
+        data : {
+            status: PaymentStatus.CANCELLED,
+            gatewayResponse : exexutedPaymentResult
+        }
+    })
+
     return {
-        exexutedPaymentResult,
+        // exexutedPaymentResult,
         // transactionId : exexutedPaymentResult.trxID,
         redirectUrl : `${config.frontend_url}/dashboard/my-appointments?status=cancel`
     }
-}
-
-return {
+}else{
+    return {
     exexutedPaymentResult,
         // transactionId : exexutedPaymentResult.trxID,
-        redirectUrl : `${config.frontend_url}/dashboard/my-appointments`
+        // redirectUrl : `${config.frontend_url}/dashboard/my-appointments`
+        redirectUrl : `${config.frontend_url}/dashboard/my-appointments?error=payment-failed`
 }
 
 // return exexutedPaymentResult;
@@ -133,6 +178,11 @@ return {
     // return {
     //     success : true
     // }
+}
+
+   });
+
+   return transactionResult
 }
 
 export const AppointmentServices = {
