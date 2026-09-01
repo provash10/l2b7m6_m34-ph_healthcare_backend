@@ -12,3 +12,9 @@ Google >>> bkash sandbox credentials
 >>> https://onecodesoft.com/blogs/bkash-sandbox-credentials-for-payment-gateway-testing
 
 google > jwt decode >>>https://jwt.ms/ >>> access token or refresh token check
+
+Bkash sendbox credentials >>>
+https://onecodesoft.com/blogs/bkash-sandbox-credentials-for-payment-gateway-testing
+
+http://localhost:3000/dashboard/my-appointments?status=success     01770618575  success
+http://localhost:3000/dashboard/my-appointments?status=failure  	01823074817	Insufficient Balance
