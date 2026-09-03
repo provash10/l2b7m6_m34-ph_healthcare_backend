@@ -6,6 +6,7 @@ import config from "../../config";
 import { getBkashIdToken } from "../../lib/bkash";
 import { prisma } from "../../lib/prisma";
 import { RequestUser } from "../../middleware/checkAuth";
+import crypto from "crypto";
 
 const bookAppointment = async (payload: any, user: RequestUser) => {
   const transactionResult = await prisma.$transaction(async (tx) => {
@@ -178,6 +179,16 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
       throw new Error("Payment Status is Missing");
     }
 
+    const existingPayment = await tx.payment.findUnique({
+      where: {
+        bkashPaymentId: paymentId,
+      },
+    });
+
+    if (!existingPayment) {
+      throw new Error("Payment Record Not Found");
+    }
+
     const bkashIdToken = await getBkashIdToken();
     if (!bkashIdToken) {
       throw new Error("No Bkash Access Token Found");
@@ -202,10 +213,13 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
     const executedPaymentResult = await executedPaymentResponse.json();
     console.log({ executedPaymentResult });
 
+    const targetAppointmentId =
+      executedPaymentResult?.merchantInvoiceNumber || existingPayment.appointmentId;
+
     if (status === "success") {
       await tx.appointment.update({
         where: {
-          id: executedPaymentResult.merchantInvoiceNumber,
+          id: targetAppointmentId,
         },
         data: {
           status: AppointmentStatus.CONFIRMED,
@@ -276,7 +290,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
 };
 
 //cancel appointment
-const cancelAppointment = async (payload: any) => {
+const cancelAppointment = async (payload: any, user: RequestUser) => {
  const transactionResult = await prisma.$transaction(async(tx)=>{
    const appointmentId = payload.appointmentId;
 
@@ -317,44 +331,54 @@ const cancelAppointment = async (payload: any) => {
     throw new Error("No Bkash Access Token Found");
   }
 
+
+
+
+  // /v2/tokenized-checkout/refund/payment/transaction
   const bkashRefundPaymentResponse = await fetch(
-    `${config.bkash_base_url}/v2/tokenized-checkout/refund/payment/transaction`,
+    `${config.bkash_base_url}/tokenized/checkout/payment/refund/`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
         Authorization: bkashIdToken,
+        // Authorization: bkashSignature,
         "X-App-Key": config.bkash_app_key,
       },
+
       body: JSON.stringify({
-        paymentId: existingAppointment.payment?.bkashPaymentId,
-        trxId: existingAppointment.payment?.bkashTrxId,
-        refundAmount: existingAppointment.payment?.amount,
-        // sku: "test",
+        paymentID: existingAppointment.payment?.bkashPaymentId,
+        trxID: existingAppointment.payment?.bkashTrxId,
+        amount: existingAppointment.payment?.amount.toString(),   //refundAmount
+        sku: "Appointment Cancellation",
         reason: "Patient Cancel the Appointment",
       }),
+      //  body: bodyString
     }
   );
 
   const bkashRefundPaymentResult = await bkashRefundPaymentResponse.json();
 
+  console.log({bkashRefundPaymentResult})
   const updatedPayment = await tx.payment.update({
     where : {
       appointmentId : existingAppointment.id
     },
     data : {
-      refundTrxId : bkashRefundPaymentResult.refundTrxId,
-      refundedAt : bkashRefundPaymentResult.CompletedTime,
-      refundAmount : bkashRefundPaymentResult.refundAmount,
-      refundReason : bkashRefundPaymentResult.reason
+      refundTrxId : bkashRefundPaymentResult.refundTrxID || bkashRefundPaymentResult.refundTrxId,
+      refundedAt : bkashRefundPaymentResult.completedTime || bkashRefundPaymentResult.CompletedTime || new Date().toISOString(),
+      refundAmount : bkashRefundPaymentResult.amount || bkashRefundPaymentResult.refundAmount || existingAppointment.payment?.amount,
+      refundReason : "Patient Cancelled The Appointment",
+      status : PaymentStatus.REFUNDED,
+      gatewayResponse : bkashRefundPaymentResult
     }
   })
 
   return {
-    appointment : updateAppointment,
-    paymnent : updateAppointment
-  }
+    appointment: updateAppointment,
+    payment: updatedPayment,
+  };
  })
 
  return transactionResult;
