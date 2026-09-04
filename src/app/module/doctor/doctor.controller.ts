@@ -4,6 +4,7 @@ import { DoctorServices } from "./doctor.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 import { ApplyAsDoctorValidationZodSchema } from "./doctor.validation";
+import { IRequestUser } from "../auth/auth.interface";
 
 const applyAsDoctor = catchAsync(async (req: Request, res: Response) => {
 
@@ -47,7 +48,22 @@ const verifyDoctorEmail = catchAsync(async (req: Request, res: Response) => {
     });
 });
 
+const approveDoctor = catchAsync(async (req: Request, res: Response) => {
+    const user = req.user as IRequestUser;
+    const payload = req.body;
+
+    const result = await DoctorServices.approveDoctor(payload, user);
+    
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: "Doctor Status Updated successfully",
+        data: result,
+    });
+});
+
 export const DoctorController = {
     applyAsDoctor,
-    verifyDoctorEmail
+    verifyDoctorEmail,
+    approveDoctor
 };

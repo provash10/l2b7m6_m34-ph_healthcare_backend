@@ -3,7 +3,7 @@ import { prisma } from "../../lib/prisma";
 import { cloudinary } from "../../lib/cloudinary";
 import bcrypt from "bcryptjs";
 import config from "../../config";
-import { Role } from "../../../generated/prisma/enums";
+import { Role, DoctorVerificationStatus } from "../../../generated/prisma/enums";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import crypto from "crypto";
@@ -11,10 +11,12 @@ import { redisClient } from "../../lib/redis";
 import path from "path";
 import { transporter } from "../../lib/nodemailer";
 import ejs from "ejs";
+import { IApplyAsDoctorPayload, IApproveDoctorPayload, IVerifyDoctorEmailPayload } from "./doctor.interface";
+import { IRequestUser } from "../auth/auth.interface";
 
 
 const applyAsDoctor = async (
-    payload: any,
+    payload: IApplyAsDoctorPayload,
     resume: Express.Multer.File | null,
     additionalFiles: Express.Multer.File[]
 ) => {
@@ -143,7 +145,7 @@ const applyAsDoctor = async (
     });
 
     const expirationSeconds = 60 * 60
-    const otpKey = `doctor-application:otp:${payload.user.email}`
+    const otpKey = `doctor-application-otp:${payload.user.email}`
     const otpValue = crypto.randomInt(100000, 1000000).toString();
 
     await redisClient.set(otpKey, otpValue,{
@@ -178,11 +180,99 @@ const html = await ejs.renderFile(templatePath, templateData);
     return doctorApplication.doctor;
 };
 
-const verifyDoctorEmail = async(payload : any) => {
+const verifyDoctorEmail = async(payload : IVerifyDoctorEmailPayload) => {
+    const otp = payload.otp;
+    const email = payload.email.trim().toLowerCase();
+
+    const existingUser = await prisma.user.findUnique({
+  where: { email, role: Role.DOCTOR },
+});
+
+if (!existingUser) {
+  throw new Error("Doctor Application Not Found. Please Apply Again.");
+}
+
+if (existingUser.emailVerified) {
+  throw new Error("Email Already Verified");
+}
+
+const otpKey = `doctor-application-otp:${email}`;
+
+const redisOtp = await redisClient.get(otpKey);
+if(!redisOtp){
+    throw new Error("OTP Expired. Your Application Window Has Closed, Please Apply Again")
+};
+if(redisOtp !== otp){
+    throw new Error("OTP Does Not Match")
+};
+
+await redisClient.del(otpKey);
+
+const verifiedUser = await prisma.user.update({
+  where: { id: existingUser.id },
+  data: { emailVerified: true },
+  omit: { password: true },
+  include: { doctor: true },
+});
+
+return verifiedUser
 
 }
 
+const approveDoctor = async (payload: IApproveDoctorPayload, reviewer: IRequestUser) => {
+    const { doctorId, verificationStatus, rejectionReason } = payload;
+
+    const existingDoctor = await prisma.doctor.findUnique({
+        where: { id: doctorId },
+        include: { user: true },
+    });
+
+    if (!existingDoctor) {
+        throw new Error("Doctor Application Not Found");
+    }
+
+    if (existingDoctor.isDeleted) {
+        throw new Error("Doctor Application Has Been Deleted");
+    }
+
+    if (!existingDoctor.user.emailVerified) {
+        throw new Error(
+            "Doctor Has Not Verified Their Email Yet. Application Cannot Be Reviewed."
+        );
+    }
+
+    if (existingDoctor.verificationStatus !== DoctorVerificationStatus.PENDING) {
+        throw new Error(
+            `Doctor Application Has Already Been ${existingDoctor.verificationStatus.toLowerCase()}`
+        );
+    }
+
+    //use zod
+    if (
+        verificationStatus === DoctorVerificationStatus.REJECTED &&
+        !rejectionReason
+    ) {
+        throw new Error(
+            "Rejection Reason Is Required When Rejecting A Doctor Application"
+        );
+    }
+
+    const result = await prisma.doctor.update({
+        where: { id: doctorId },
+        data: {
+            verificationStatus,
+            rejectionReason: verificationStatus === DoctorVerificationStatus.REJECTED ? rejectionReason : null,
+            reviewedBy : reviewer.userId,
+            reviewedAt: new Date(),
+        },
+        include: { user: true },
+    });
+
+    return result;
+};
+
 export const DoctorServices = {
     applyAsDoctor,
-    verifyDoctorEmail
+    verifyDoctorEmail,
+    approveDoctor
 };
