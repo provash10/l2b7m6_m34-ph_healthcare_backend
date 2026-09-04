@@ -1,0 +1,20 @@
+{
+  "user": {
+    "name": "Dr. Sarah Jenkins",
+    "email": "dr.sarah.jenkins@example.com",
+    "password": "SecurePassword123!",
+    "role": "DOCTOR",
+    "imageUrl": "https://cloudinary.com",
+    "imagePublicId": "default_profile_id"
+  },
+  "doctor": {
+    "address": "123 Medical Plaza, Suite 400, New York, NY",
+    "specialization": "Cardiology",
+    "licenseNumber": "MED-2026-98765",
+    "qualifications": "MD, FACC - Harvard Medical School",
+    "experienceYears": 12,
+    "bio": "Dedicated cardiologist with over a decade of experience specializing",
+    "consultationFee": 150.00,
+    "contactNumber": "+1-555-0199"
+  }
+}

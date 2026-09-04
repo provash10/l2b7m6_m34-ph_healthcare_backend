@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import httpStatus from "http-status";
+import multer from "multer";
 import { Prisma } from "../../generated/prisma/client";
 import config from "../config";
 
@@ -19,7 +20,13 @@ export const globalErrorHandler = async (
 	const errorName = err.name || "Internal Server Error";
 	// let errorDetails = err.stack
 
-	if (err instanceof Prisma.PrismaClientValidationError) {
+	if (err instanceof multer.MulterError) {
+		statusCode = httpStatus.BAD_REQUEST;
+		errorMessage = err.message;
+		if (err.code === "LIMIT_UNEXPECTED_FILE") {
+			errorMessage = `Unexpected file field: '${err.field}'`;
+		}
+	} else if (err instanceof Prisma.PrismaClientValidationError) {
 		statusCode = httpStatus.BAD_REQUEST;
 		errorMessage = "You have provided incorrect field type or missing fields";
 	} else if (err instanceof Prisma.PrismaClientKnownRequestError) {
