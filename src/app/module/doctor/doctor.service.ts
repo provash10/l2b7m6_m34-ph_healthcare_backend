@@ -6,6 +6,12 @@ import config from "../../config";
 import { Role } from "../../../generated/prisma/enums";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
+import crypto from "crypto";
+import { redisClient } from "../../lib/redis";
+import path from "path";
+import { transporter } from "../../lib/nodemailer";
+import ejs from "ejs";
+
 
 const applyAsDoctor = async (
     payload: any,
@@ -136,9 +142,47 @@ const applyAsDoctor = async (
         },
     });
 
+    const expirationSeconds = 60 * 60
+    const otpKey = `doctor-application:otp:${payload.user.email}`
+    const otpValue = crypto.randomInt(100000, 1000000).toString();
+
+    await redisClient.set(otpKey, otpValue,{
+        expiration : {
+            type : "EX",
+            value : expirationSeconds,
+        },
+    })
+
+    const tempatePath = path.join(
+  process.cwd(),
+  "src/app/templates/registration-user-otp.ejs",
+);
+
+const templateData = {
+  name: payload.user.name,
+  email : payload.user.email,
+  otp: otpValue,
+  expirationMinutes: expirationSeconds / 60,
+};
+const html = await ejs.renderFile(templatePath, templateData);
+
+    //nodemailer
+    await transporter.sendMail({
+        from: config.email_sender,
+        to: payload.user.email,
+        subject: "Email Verification",
+        html,
+    });
+
+
     return doctorApplication.doctor;
 };
 
+const verifyDoctorEmail = async(payload : any) => {
+
+}
+
 export const DoctorServices = {
     applyAsDoctor,
+    verifyDoctorEmail
 };
