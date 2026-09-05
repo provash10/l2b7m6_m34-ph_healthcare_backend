@@ -1,4 +1,6 @@
 model Doctor {
+  id String @id @default(uuid())
+
   name    String
   email   String  @unique
   address String?
@@ -19,7 +21,7 @@ model Doctor {
   reviewedAt         DateTime?
 
   resume          String?
-  additionalFiles String[]
+  additionalFiles String[] @default([])
 
   isDeleted Boolean   @default(false)
   deletedAt DateTime?
@@ -29,6 +31,9 @@ model Doctor {
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  schedules Schedule[]
+  appointments Appointment[]
 
   @@index([email], name: "idx_doctor_email")
   @@map("doctors")

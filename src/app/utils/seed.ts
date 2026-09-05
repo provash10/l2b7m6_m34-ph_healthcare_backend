@@ -141,7 +141,8 @@ export const seedTesterDoctor = async () => {
                         experienceYears : 5,
                         licenseNumber: "BMDC0000",
                         qualifications : "MBBS",
-                        specialization: "Neurology"
+                        specialization: "Neurology",
+                        additionalFiles: []
                     }
                 }
             }
