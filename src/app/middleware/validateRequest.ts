@@ -1,6 +1,8 @@
 import z from "zod";
 import { catchAsync } from "../utils/catchAsync";
 import { NextFunction, Request, Response } from "express";
+import AppError from "../errors/AppError";
+import httpStatus from "http-status";
 
 export const validateRequest = (zodSchema : z.ZodObject) => {
 	return catchAsync(
@@ -16,7 +18,7 @@ export const validateRequest = (zodSchema : z.ZodObject) => {
 				console.log(result.error);
 				console.log(result.error.issues);
 
-				throw new Error(result.error.issues[0].message)
+				throw new AppError(httpStatus.BAD_REQUEST, result.error.issues[0].message)
 			}
 
 			req.body = result.data

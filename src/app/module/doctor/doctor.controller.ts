@@ -5,6 +5,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 import { ApplyAsDoctorValidationZodSchema } from "./doctor.validation";
 import { IRequestUser } from "../auth/auth.interface";
+import AppError from "../../errors/AppError";
 
 const applyAsDoctor = catchAsync(async (req: Request, res: Response) => {
 
@@ -18,7 +19,7 @@ const applyAsDoctor = catchAsync(async (req: Request, res: Response) => {
     const zodValidationResult = ApplyAsDoctorValidationZodSchema.safeParse(JSON.parse(req.body.data));
 
     if (!zodValidationResult.success) {
-        throw new Error(zodValidationResult.error.issues[0].message);
+        throw new AppError(httpStatus.BAD_REQUEST, zodValidationResult.error.issues[0].message);
     }
 
     const payload = zodValidationResult.data;

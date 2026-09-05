@@ -3,17 +3,18 @@ import { catchAsync } from "../../utils/catchAsync"
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
 import { UserServices } from "./user.service";
+import AppError from "../../errors/AppError";
 
 
 const uploadProfileImage = catchAsync(async (req: Request, res: Response) => {
     if (!req.file) {
-        throw new Error("No File Provided.");
+        throw new AppError(httpStatus.BAD_REQUEST, "No File Provided.");
     }
 
     const userId = req.user?.userId;
 
     if (!userId) {
-        throw new Error("Unauthorized access. User ID missing.");
+        throw new AppError(httpStatus.UNAUTHORIZED, "Unauthorized access. User ID missing.");
     }
 
     const result = await UserServices.uploadProfileImage(req.file.buffer, userId);

@@ -3,6 +3,7 @@ import httpStatus from "http-status";
 import multer from "multer";
 import { Prisma } from "../../generated/prisma/client";
 import config from "../config";
+import AppError from "../errors/AppError";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const globalErrorHandler = async (
@@ -51,9 +52,14 @@ export const globalErrorHandler = async (
 			errorMessage = "Can't reach database server";
 		}
 	} else if (err instanceof Prisma.PrismaClientUnknownRequestError) {
+		console.log("App Error", err)
 		statusCode = httpStatus.INTERNAL_SERVER_ERROR;
 		errorMessage = "Error occurred during query execution";
-	} else if (err instanceof Error) {
+	}else if (err instanceof AppError){
+		errorMessage = err.message
+		statusCode = err.statusCode
+	}
+	else if (err instanceof Error) {
 		errorMessage = err.message;
 		if ("statusCode" in err && typeof (err as any).statusCode === "number") {
 			statusCode = (err as any).statusCode;

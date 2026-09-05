@@ -35,7 +35,7 @@ const registerPatient = async (payload: IRegisterPatientPayload) => {
 	});
 
 	if (isUserExists) {
-		throw new Error("User with this email already exists");
+		throw new AppError(httpStatus.BAD_REQUEST, "User with this email already exists");
 	}
 
 	const hashedPassword = await bcrypt.hash(password, 8);
@@ -246,17 +246,17 @@ const loginUser = async (payload: ILoginUserPayload) => {
 	}
 
 	if (user.status === UserStatus.BLOCKED) {
-		throw new Error("User is blocked");
+		throw new AppError(httpStatus.FORBIDDEN, "User is blocked");
 	}
 
 	if (user.isDeleted || user.status === UserStatus.DELETED) {
-		throw new Error("User is deleted");
+		throw new AppError(httpStatus.FORBIDDEN, "User is deleted");
 	}
 
 	const isPasswordMatched = await bcrypt.compare(password, user.password as string);
 
 	if (!isPasswordMatched) {
-		throw new Error("Invalid credentials");
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid credentials");
 	}
 
 	const jwtPayload = {
@@ -298,7 +298,7 @@ const getMe = async (user: IRequestUser) => {
 	});
 
 	if (!isUserExists) {
-		throw new Error("User not found");
+		throw new AppError(httpStatus.NOT_FOUND, "User not found");
 	}
 
 	return isUserExists;
@@ -311,7 +311,8 @@ const refreshToken = async (token: string) => {
 	);
 
 	if (!verifiedRefreshToken.success || !verifiedRefreshToken.data) {
-		throw new Error(
+		throw new AppError(
+			httpStatus.UNAUTHORIZED,
 			config.node_env === "development"
 				? verifiedRefreshToken.error
 				: "Invalid refresh token",
@@ -325,7 +326,7 @@ const refreshToken = async (token: string) => {
 	});
 
 	if (!user || user.isDeleted || user.status !== UserStatus.ACTIVE) {
-		throw new Error("User is inactive or not found");
+		throw new AppError(httpStatus.UNAUTHORIZED, "User is inactive or not found");
 	}
 
 	const jwtPayload = {
@@ -364,19 +365,19 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 		googleIdTokenPayload = ticket.getPayload();
 	} catch (error) {
 		console.log("Google ID Token Verification Failed", error);
-		throw new Error("Invalid Or Expired Google Id Token");
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid Or Expired Google Id Token");
 	}
 
 	if (!googleIdTokenPayload) {
-		throw new Error("Invalid Or Expired Google Id Token");
+		throw new AppError(httpStatus.UNAUTHORIZED, "Invalid Or Expired Google Id Token");
 	}
 
 	if (!googleIdTokenPayload.email) {
-		throw new Error("Google Email Not Found");
+		throw new AppError(httpStatus.BAD_REQUEST, "Google Email Not Found");
 	}
 
 	if (!googleIdTokenPayload.name) {
-		throw new Error("Google User Name Not Found");
+		throw new AppError(httpStatus.BAD_REQUEST, "Google User Name Not Found");
 	}
 
 	const ifPatientExistWithGoogleAuth = await prisma.user.findFirst({
@@ -400,13 +401,13 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 
 		if (ifPatientExistWithCredentials) {
 			if (ifPatientExistWithCredentials.status === UserStatus.BLOCKED) {
-				throw new Error("User Is Blocked");
+				throw new AppError(httpStatus.FORBIDDEN, "User Is Blocked");
 			}
 			if (
 				ifPatientExistWithCredentials.isDeleted ||
 				ifPatientExistWithCredentials.status === UserStatus.DELETED
 			) {
-				throw new Error("User Is Deleted");
+				throw new AppError(httpStatus.FORBIDDEN, "User Is Deleted");
 			}
 
 			user = await prisma.user.update({
@@ -457,15 +458,15 @@ const googleLogin = async (payload: IGoogleLoginPayload) => {
 	}
 
 	if (!user) {
-		throw new Error("User Not Found");
+		throw new AppError(httpStatus.NOT_FOUND, "User Not Found");
 	}
 
 	if (user.status === UserStatus.BLOCKED) {
-		throw new Error("User Is Blocked");
+		throw new AppError(httpStatus.FORBIDDEN, "User Is Blocked");
 	}
 
 	if (user.isDeleted || user.status === UserStatus.DELETED) {
-		throw new Error("User Is Deleted");
+		throw new AppError(httpStatus.FORBIDDEN, "User Is Deleted");
 	}
 
 	const jwtPayload = {

@@ -1,15 +1,4 @@
-export class AppError extends Error {
-    public statusCode : number
+import AppError from "../errors/AppError";
 
-    constructor(statusCode : number, message : string, stack = ""){
-        super(message) //throw new Error(message)
-
-        this.statusCode = statusCode
-
-        if(stack){
-            this.stack = stack
-        }else{
-            Error.captureStackTrace(this, this.constructor)
-        }
-    }
-}
+export { AppError };
+export default AppError;
