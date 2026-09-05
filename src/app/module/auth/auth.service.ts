@@ -241,7 +241,8 @@ const loginUser = async (payload: ILoginUserPayload) => {
 	});
 
 	if (!user) {
-		throw new Error("User not found");
+		// throw new Error("User not found");
+		throw new AppError(httpStatus.NOT_FOUND, "User Not Found")
 	}
 
 	if (user.status === UserStatus.BLOCKED) {
