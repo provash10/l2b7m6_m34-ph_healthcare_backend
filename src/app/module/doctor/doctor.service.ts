@@ -358,6 +358,7 @@ const getAllDoctors = async (query: IQuery) => {
   const sortOrder = query.sortOrder ? query.sortOrder : "desc";
 
   const andConditions: DoctorWhereInput[] = [];
+  
   //searching
   if (query.searchTerm) {
     andConditions.push({

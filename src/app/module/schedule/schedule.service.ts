@@ -5,6 +5,8 @@ import { RequestUser } from "../../middleware/checkAuth"
 import { ICreateSchedulePayload } from "./schedule.interface"
 import httpStatus from "http-status";
 import { Prisma } from "../../../generated/prisma/client";
+import { IQuery } from "../../interfaces";
+import { ScheduleWhereInput } from "../../../generated/prisma/models";
 
 const createSchedule = async(payload:ICreateSchedulePayload, user : RequestUser) => {
     const doctor = await prisma.doctor.findUnique({
@@ -20,7 +22,7 @@ const createSchedule = async(payload:ICreateSchedulePayload, user : RequestUser)
     const startOfTheDay = startOfDay(payload.startDateTime) // 25 August => 12:00 AM => 2026-08-25T00:00:00.436Z
     const startOfNextDay = addDays(startOfTheDay, 1) // 26 August => 12:00 AM => 2026-08-26T00:00:00.436Z
 
-    const existingScheduleOnThisDate = await Prisma.ScheduleScalarFieldEnum.findFirst({
+    const existingScheduleOnThisDate = await prisma.schedule.findFirst({
         where : {
             doctorId : doctor.id,
             isDeleted : false,
@@ -70,6 +72,217 @@ const createSchedule = async(payload:ICreateSchedulePayload, user : RequestUser)
 
 }
 
+const getMySchedules = async (query : IQuery, user : RequestUser) => {
+    const limit = query.limit ? Number(query.limit) : 10;
+    const page = query.page ? Number(query.page) : 1;
+    const skip = (page - 1) * limit;
+    const sortBy = query.sortBy ? query.sortBy : "createdAt";
+    const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+    const doctor = await prisma.doctor.findUnique({
+        where: {
+            userId : user.userId
+        }
+    });
+
+    if(!doctor){
+        throw new AppError(httpStatus.NOT_FOUND, "Doctor Profile Not Found");
+    }
+
+    // let limit = 10;
+    // if (query.limit) {
+    //     limit = Number(query.limit);
+    // }
+
+    // let page = 1;
+    // if (query.page) {
+    //     page = Number(query.page);
+    // }
+
+    // const skip = (page - 1) * limit;
+
+    
+
+    const andConditions: ScheduleWhereInput[] = [
+        {
+            doctorId : doctor.id 
+        },
+        {
+            isDeleted : false
+        },
+
+    ];
+
+    if (query.status){
+            andConditions.push({status : query.status})
+        }
+    
+    const schedules = await prisma.schedule.findMany({
+        where : {
+            AND : andConditions
+        },
+        take : limit,
+        skip,
+        // orderBy : {startDateTime : "desc"},
+        orderBy:{
+            //sortBy : sortOrder
+            [sortBy] : sortOrder
+        },
+
+        include : {
+            appointments : {
+                include : {
+                    patient : true
+                }
+            }
+        }
+
+    });
+
+    const total = await prisma.schedule.count({ where: { AND: andConditions } });
+
+return {
+    data: schedules,
+    meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+    },
+};
+
+
+
+}
+
+const getAllSchedules = async (query : IQuery) => {
+    const limit = query.limit ? Number(query.limit) : 10;
+    const page = query.page ? Number(query.page) : 1;
+    const skip = (page - 1) * limit;
+    const sortBy = query.sortBy ? query.sortBy : "createdAt";
+    const sortOrder = query.sortOrder ? query.sortOrder : "desc";
+
+    const andConditions: ScheduleWhereInput[] = [
+        {
+            isDeleted: false,
+        },
+    ];
+
+    if (query.doctorId) {
+        andConditions.push({ doctorId: query.doctorId });
+    }
+    if (query.email) {
+        andConditions.push({
+            doctor: {
+                email: query.email,
+            },
+        });
+    }
+    if (query.status) {
+        andConditions.push({ status: query.status });
+    }
+
+    // searching
+    if (query.searchTerm) {
+        andConditions.push({
+            OR: [
+                {
+                    doctor: {
+                        name: {
+                            contains: query.searchTerm,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+                {
+                    doctor: {
+                        email: {
+                            contains: query.searchTerm,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+                {
+                    doctor: {
+                        specialization: {
+                            contains: query.searchTerm,
+                            mode: "insensitive",
+                        },
+                    },
+                },
+            ],
+        });
+    }
+
+  const schedules = await prisma.schedule.findMany({
+        where : {
+            AND : andConditions
+        },
+        take : limit,
+        skip,
+        // orderBy : {startDateTime : "desc"},
+        orderBy:{
+            //sortBy : sortOrder
+            [sortBy] : sortOrder
+        },
+
+        include : {
+            appointments : {
+                include : {
+                    patient : true
+                }
+            }
+        }
+
+    });
+
+    const total = await prisma.schedule.count({ where: { AND: andConditions } });
+
+return {
+    data: schedules,
+    meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+    },
+};
+
+}
+
+const getScheduleById = async (scheduleId : string) => {
+
+    const schedule = await prisma.schedule.findUnique({
+        where: { id: scheduleId },
+        include: {
+            doctor: {
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    specialization: true,
+                    userId: true,
+                }
+            },
+            appointments : {
+                include : {
+                    patient : true,
+                },
+            }
+        },
+    });
+
+    if(!schedule || schedule.isDeleted){
+        throw new AppError(httpStatus.NOT_FOUND, "Schdule Not Found")
+    }
+
+    return schedule;
+
+}
+
 export const ScheduleService = {
     createSchedule,
+    getMySchedules,
+    getAllSchedules,
+    getScheduleById 
 }
