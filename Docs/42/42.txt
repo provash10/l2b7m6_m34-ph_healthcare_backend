@@ -1,1 +1,3 @@
 date fns npm
+https://www.npmjs.com/search?q=pdfkit
+https://www.npmjs.com/package/pdfkit

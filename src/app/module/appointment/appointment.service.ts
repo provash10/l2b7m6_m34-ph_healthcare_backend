@@ -14,6 +14,7 @@ import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { IBookAppointmentPayload } from "./appointment.interface";
 import { addMinutes, isAfter } from "date-fns";
+import PDFDocument from "pdfkit";
 
 const bookAppointment = async (
   payload: IBookAppointmentPayload,
@@ -356,6 +357,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         include: {
           schedule: true,
           patient: true,
+          doctor: true,
         },
       });
       if (!appointment) {
@@ -385,7 +387,7 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
       const joiningTime = addMinutes(
         appointment.schedule.startDateTime,
         (serialNumber - 1) * 20
-      )
+      );
 
       await tx.appointment.update({
         where: {
@@ -394,19 +396,19 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         data: {
           status: AppointmentStatus.CONFIRMED,
           joiningTime,
-          serialNumber
+          serialNumber,
         },
       });
 
-       const newAvailableSlots = appointment.schedule.availableSlots - 1;
+      const newAvailableSlots = appointment.schedule.availableSlots - 1;
 
       await prisma.schedule.update({
-        where : {
-          id : appointment.schedule.id
+        where: {
+          id: appointment.schedule.id,
         },
-        data : {
-          availableSlots : newAvailableSlots
-        }
+        data: {
+          availableSlots: newAvailableSlots,
+        },
       });
 
       // 2nd part
@@ -422,24 +424,79 @@ const bookAppointmentCallback = async (query: Record<string, any>) => {
         },
       });
 
-      const templatePath = path.join(
-        process.cwd(),
-        "src/app/templates/appointment-invoice.ejs"
+      //PDFKit
+      const pdfDocument = new PDFDocument({ margin: 50 });
+
+      const pdfChunks: Buffer[] = [];
+
+      pdfDocument.on("data", (chunk: Buffer) => {
+        pdfChunks.push(chunk);
+      });
+
+      const pdfReadyPromise = new Promise<Buffer>((resolve) => {
+        pdfDocument.on("end", () => {
+          resolve(Buffer.concat(pdfChunks));
+        });
+      });
+
+      pdfDocument
+        .fontSize(20)
+        .text("PH Healthcare System", { align: "center" });
+      pdfDocument.fontSize(14).text("Appointment Invoice", { align: "center" });
+      pdfDocument.moveDown(2);
+
+      pdfDocument
+        .fontSize(12)
+        .text(`Patient Name: ${appointment.patient?.name}`);
+      pdfDocument.text(`Patient Email: ${appointment.patient?.email}`);
+      pdfDocument.moveDown();
+
+      pdfDocument.text(`Doctor Name: ${appointment.doctor?.name}`);
+      pdfDocument.text(
+        `Specialization:  ${appointment.doctor?.specialization}`
       );
+      pdfDocument.moveDown();
 
-      const templateData = {
-        name: appointment.patient.name,
-        appointmentId: appointment.id,
-        transactionId: executedPaymentResult.trxID,
-      };
+      pdfDocument.text(
+        `Appointment Date: ${appointment.schedule.startDateTime.toDateString()}`
+      );
+      pdfDocument.text(`Your Joining Time: ${joiningTime.toString()}`);
+      pdfDocument.text(`Your Serial Number: ${serialNumber}`);
+      pdfDocument.text(`Meeting Link: ${appointment.schedule.meetingLink}`);
+      pdfDocument.moveDown();
 
-      const html = await ejs.renderFile(templatePath, templateData);
+      pdfDocument.text(`Amount Paid: ${executedPaymentResult.amount} BDT`);
+      pdfDocument.text(`Payment Method: bKash`);
+      pdfDocument.text(`Transaction Id: ${executedPaymentResult.trxID}`);
+      pdfDocument.text(`Paid At: ${executedPaymentResult.paymentExecuteTime}`);
+
+      pdfDocument.end();
+
+      const pdfBuffer = await pdfReadyPromise;
+
+      // const templatePath = path.join(
+      //   process.cwd(),
+      //   "src/app/templates/appointment-invoice.ejs"
+      // );
+      // const templateData = {
+      //   name: appointment.patient.name,
+      //   appointmentId: appointment.id,
+      //   transactionId: executedPaymentResult.trxID,
+      // };
+      // const html = await ejs.renderFile(templatePath, templateData);
 
       await transporter.sendMail({
         from: config.email_sender,
         to: appointment.patient.email,
         subject: "Your Appointment Invoice - PH Healthcare System",
-        html,
+        // html,
+        text: "Thank you for booking an appointment. Please find your invoice attached.",
+        attachments: [
+          {
+            filename: "invoice.pdf",
+            content: pdfBuffer,
+          },
+        ],
       });
 
       return {
