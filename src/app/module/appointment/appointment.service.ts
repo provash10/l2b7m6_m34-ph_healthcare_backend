@@ -557,9 +557,13 @@ const cancelAppointment = async (payload: any, user: RequestUser) => {
     const existingAppointment = await tx.appointment.findUnique({
       where: {
         id: appointmentId,
+        patient: {
+          email: user.email,
+        },
       },
       include: {
         payment: true,
+        schedule: true,
       },
     });
     if (!existingAppointment) {
@@ -588,67 +592,101 @@ const cancelAppointment = async (payload: any, user: RequestUser) => {
         id: existingAppointment.id,
       },
       data: {
-        status: "CANCELLED",
+        // status: "CANCELLED",
+        status: AppointmentStatus.CANCELLED,
       },
     });
 
-    const bkashIdToken = await getBkashIdToken();
-    if (!bkashIdToken) {
-      throw new AppError(httpStatus.BAD_REQUEST, "No Bkash Access Token Found");
-    }
-
-    // /v2/tokenized-checkout/refund/payment/transaction
-    const bkashRefundPaymentResponse = await fetch(
-      `${config.bkash_base_url}/tokenized/checkout/payment/refund/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: bkashIdToken,
-          // Authorization: bkashSignature,
-          "X-App-Key": config.bkash_app_key,
-        },
-
-        body: JSON.stringify({
-          paymentID: existingAppointment.payment?.bkashPaymentId,
-          trxID: existingAppointment.payment?.bkashTrxId,
-          amount: existingAppointment.payment?.amount.toString(), //refundAmount
-          sku: "Appointment Cancellation",
-          reason: "Patient Cancel the Appointment",
-        }),
-        //  body: bodyString
-      }
-    );
-
-    const bkashRefundPaymentResult = await bkashRefundPaymentResponse.json();
-
-    console.log({ bkashRefundPaymentResult });
-    const updatedPayment = await tx.payment.update({
+    await prisma.schedule.update({
       where: {
-        appointmentId: existingAppointment.id,
+        id: existingAppointment.schedule.id,
       },
       data: {
-        refundTrxId:
-          bkashRefundPaymentResult.refundTrxID ||
-          bkashRefundPaymentResult.refundTrxId,
-        refundedAt:
-          bkashRefundPaymentResult.completedTime ||
-          bkashRefundPaymentResult.CompletedTime ||
-          new Date().toISOString(),
-        refundAmount:
-          bkashRefundPaymentResult.amount ||
-          bkashRefundPaymentResult.refundAmount ||
-          existingAppointment.payment?.amount,
-        refundReason: "Patient Cancelled The Appointment",
-        status: PaymentStatus.REFUNDED,
-        gatewayResponse: bkashRefundPaymentResult,
+        availableSlots: { increment: 1 },
+      },
+    });
+
+    // refund process
+    const now = new Date();
+    const startDateTime = existingAppointment.schedule.startDateTime; // 25 August : 3:00 PM
+
+    // After 2:00 Pm => no refund
+    // must cancel before 2:00 PM
+    const refundCutOffTime = subHours(startDateTime, 1);
+
+    // now > refuncCutOff Time => no refund
+    // now < refundCutOff Time => refund eligible
+    const isEligibleForRefund = isBefore(now, refundCutOffTime);
+
+    if (isEligibleForRefund) {
+      const bkashIdToken = await getBkashIdToken();
+      if (!bkashIdToken) {
+        throw new AppError(
+          httpStatus.BAD_REQUEST,
+          "No Bkash Access Token Found"
+        );
+      }
+
+      // /v2/tokenized-checkout/refund/payment/transaction
+      const bkashRefundPaymentResponse = await fetch(
+        `${config.bkash_base_url}/tokenized/checkout/payment/refund/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: bkashIdToken,
+            // Authorization: bkashSignature,
+            "X-App-Key": config.bkash_app_key,
+          },
+
+          body: JSON.stringify({
+            paymentID: existingAppointment.payment?.bkashPaymentId,
+            trxID: existingAppointment.payment?.bkashTrxId,
+            amount: existingAppointment.payment?.amount.toString(), //refundAmount
+            sku: "Appointment Cancellation",
+            reason: "Patient Cancel the Appointment",
+          }),
+          //  body: bodyString
+        }
+      );
+
+      const bkashRefundPaymentResult = await bkashRefundPaymentResponse.json();
+
+      console.log({ bkashRefundPaymentResult });
+      await tx.payment.update({
+        where: {
+          appointmentId: existingAppointment.id,
+        },
+        data: {
+          refundTrxId:
+            bkashRefundPaymentResult.refundTrxID ||
+            bkashRefundPaymentResult.refundTrxId,
+          refundedAt:
+            bkashRefundPaymentResult.completedTime ||
+            bkashRefundPaymentResult.CompletedTime ||
+            new Date().toISOString(),
+          refundAmount:
+            bkashRefundPaymentResult.amount ||
+            bkashRefundPaymentResult.refundAmount ||
+            existingAppointment.payment?.amount,
+          refundReason: "Patient Cancelled The Appointment",
+          status: PaymentStatus.REFUNDED,
+          gatewayResponse: bkashRefundPaymentResult,
+        },
+      });
+    }
+
+    const newPaymentInfo = await tx.payment.findUnique({
+      where: {
+        appointmentId: existingAppointment.id,
       },
     });
 
     return {
       appointment: updateAppointment,
-      payment: updatedPayment,
+      // payment: updatedPayment,
+      payment: newPaymentInfo,
     };
   });
 
