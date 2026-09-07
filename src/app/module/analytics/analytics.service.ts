@@ -24,7 +24,7 @@ const getAdminAnalytics = async () => {
     },
   });
 
-  const totalApproveDoctors = await prisma.doctor.count({
+  const totalApprovedDoctors = await prisma.doctor.count({
     where: {
       isDeleted: false,
       verificationStatus: DoctorVerificationStatus.APPROVED,
@@ -55,24 +55,41 @@ const getAdminAnalytics = async () => {
     where: { status: AppointmentStatus.CANCELLED },
   });
 
+  //total Revenue
   const totalRevenueResult = await prisma.payment.aggregate({
-    where: { status: PaymentStatus.PAID },
-    _sum: { amount: true },
+    where: {
+      status: PaymentStatus.PAID,
+    },
+    _sum: {
+      amount: true,
+    },
   });
-  const totalRevenue = totalRevenueResult._sum.amount
-    ? Number(totalRevenueResult._sum.amount)
-    : 0;
+
+  const totalRefundResult = await prisma.payment.aggregate({
+    where: {
+      status: PaymentStatus.REFUNDED,
+    },
+    _sum: {
+      refundAmount: true,
+    },
+  });
+
+  const totalRefunded = totalRefundResult._sum.refundAmount?.toNumber() || 0;
+
+  const totalRevenue =
+    (totalRevenueResult._sum.amount?.toNumber() || 0) - totalRefunded;
 
   return {
     totalDoctors,
     totalPendingDoctorApplications,
-    totalApproveDoctors,
+    totalApprovedDoctors,
     totalRejectedDoctors,
     totalPatients,
     totalAppointments,
     totalCompletedAppointments,
     totalCancelledAppointments,
     totalRevenue,
+    totalRefunded,
   };
 };
 
@@ -101,11 +118,44 @@ const getPatientAnalytics = async (user: RequestUser) => {
     where: { patientId: patient.id, status: AppointmentStatus.CANCELLED },
   });
 
+  //patient total payment
+  const totalAmountSpentResult = await prisma.payment.aggregate({
+    where: {
+      appointment: {
+        patientId: patient.id,
+      },
+      status: PaymentStatus.PAID,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const totalAmountSpent =
+    totalAmountSpentResult._sum.amount?.toNumber() || 0;
+
+  const totalRefundedResult = await prisma.payment.aggregate({
+    where: {
+      appointment: {
+        patientId: patient.id,
+      },
+      status: PaymentStatus.REFUNDED,
+    },
+    _sum: {
+      refundAmount: true,
+    },
+  });
+
+  const totalRefunded =
+    totalRefundedResult._sum.refundAmount?.toNumber() || 0;
+
   return {
     totalAppointments,
     upcomingAppointments,
     completedAppointments,
     cancelledAppointments,
+    totalAmountSpent,
+    totalRefunded,
   };
 };
 
@@ -150,6 +200,38 @@ const getDoctorAnalytics = async (user: RequestUser) => {
     where: { doctorId: doctor.id, status: AppointmentStatus.CANCELLED },
   });
 
+  //doctor fund
+  const totalDoctorRefundedResult = await prisma.payment.aggregate({
+    where: {
+      appointment: {
+        doctorId: doctor.id,
+      },
+      status: PaymentStatus.REFUNDED,
+    },
+    _sum: {
+      refundAmount: true,
+    },
+  });
+
+  const totalDoctorRefunded =
+    totalDoctorRefundedResult._sum.refundAmount?.toNumber() || 0;
+
+  const totalDoctorEarningsResult = await prisma.payment.aggregate({
+    where: {
+      appointment: {
+        doctorId: doctor.id,
+      },
+      status: PaymentStatus.PAID,
+    },
+    _sum: {
+      amount: true,
+    },
+  });
+
+  const totalDoctorEarnings =
+    (totalDoctorEarningsResult._sum.amount?.toNumber() || 0) -
+    totalDoctorRefunded;
+
   return {
     totalSchedules,
     publishedSchedules,
@@ -158,6 +240,8 @@ const getDoctorAnalytics = async (user: RequestUser) => {
     ongoingAppointments,
     completedAppointments,
     cancelledAppointments,
+    totalDoctorEarnings,
+    totalDoctorRefunded,
   };
 };
 
