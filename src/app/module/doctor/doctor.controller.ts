@@ -3,7 +3,7 @@ import { catchAsync } from "../../utils/catchAsync";
 import { DoctorServices } from "./doctor.service";
 import { sendResponse } from "../../utils/sendResponse";
 import httpStatus from "http-status";
-import { ApplyAsDoctorValidationZodSchema } from "./doctor.validation";
+import { ApplyAsDoctorValidationZodSchema, DoctorPublicQueryValidationZodSchema, SingleDoctorPublicProfileParamsValidationZodSchema } from "./doctor.validation";
 import { IRequestUser } from "../auth/auth.interface";
 import AppError from "../../errors/AppError";
 
@@ -77,10 +77,78 @@ const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
         meta: meta
     });
 });
+//
+
+const updateMyDoctorProfile = catchAsync(
+  async (req: Request, res: Response) => {
+    const payload = req.body;
+    const user = req.user!;
+
+    const result = await DoctorServices.updateMyDoctorProfile(payload, user);
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Doctor Profile Updated Successfully",
+      data: result,
+    });
+  }
+);
+
+const getAvailableDoctorByTodaySchedule = catchAsync(
+  async (req: Request, res: Response) => {
+    const { data, meta } =
+      await DoctorServices.getAvailableDoctorByTodaySchedule(req.query);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Today's Available Doctors Retrieved Successfully",
+      data,
+      meta,
+    });
+  }
+);
+
+const getAllDoctorsListPublic = catchAsync(
+  async (req: Request, res: Response) => {
+    const { data, meta } = await DoctorServices.getAllDoctorsListPublic(
+      req.query
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Doctors Retrieved Successfully",
+      data,
+      meta,
+    });
+  }
+);
+
+const getSingleDoctorPublicProfile = catchAsync(
+  async (req: Request, res: Response) => {
+    const doctorId = req.params.doctorId!;
+
+    const result = await DoctorServices.getSingleDoctorPublicProfile(doctorId);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Doctor Profile Retrieved Successfully",
+      data: result,
+    });
+  }
+);
 
 export const DoctorController = {
-    applyAsDoctor,
-    verifyDoctorEmail,
-    approveDoctor,
-    getAllDoctors
+  applyAsDoctor,
+  verifyDoctorEmail,
+  approveDoctor,
+  getAllDoctors,
+  updateMyDoctorProfile,
+  updateDoctorProfile: updateMyDoctorProfile,
+  getAvailableDoctorByTodaySchedule,
+  getAllDoctorsListPublic,
+  getAllDoctorListPublic: getAllDoctorsListPublic,
+  getSingleDoctorPublicProfile,
 };
