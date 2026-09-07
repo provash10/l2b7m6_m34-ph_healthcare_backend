@@ -33,7 +33,12 @@ const createSchedule = async (
   // 25 August => start Time : 9:00 PM
   // 26 August => end Time : 3:00AM
 
-  if (!isSameDay(payload.startDateTime, payload.endDateTime)) {
+  const isSameDayUTC = (d1: Date, d2: Date) =>
+    d1.getUTCFullYear() === d2.getUTCFullYear() &&
+    d1.getUTCMonth() === d2.getUTCMonth() &&
+    d1.getUTCDate() === d2.getUTCDate();
+
+  if (!isSameDay(payload.startDateTime, payload.endDateTime) && !isSameDayUTC(payload.startDateTime, payload.endDateTime)) {
     throw new AppError(
       httpStatus.CONFLICT,
       "Start Date Time And End Date Time Must Be On The Same Day"
@@ -70,9 +75,8 @@ const createSchedule = async (
     );
   }
 
-  const durationInMinutes = differenceInMinutes(
-    payload.startDateTime,
-    payload.endDateTime
+  const durationInMinutes = Math.abs(
+    differenceInMinutes(payload.endDateTime, payload.startDateTime)
   );
 
   const MINUTES_ALLOCATED_PER_SLOT = 20;
@@ -105,7 +109,7 @@ const getMySchedules = async (query: IQuery, user: RequestUser) => {
   const limit = query.limit ? Number(query.limit) : 10;
   const page = query.page ? Number(query.page) : 1;
   const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ? query.sortBy : "createdAt";
+  const sortBy = query.sortBy ? query.sortBy : "startDateTime";
   const sortOrder = query.sortOrder ? query.sortOrder : "desc";
 
   const doctor = await prisma.doctor.findUnique({
@@ -181,7 +185,7 @@ const getAllSchedules = async (query: IQuery) => {
   const limit = query.limit ? Number(query.limit) : 10;
   const page = query.page ? Number(query.page) : 1;
   const skip = (page - 1) * limit;
-  const sortBy = query.sortBy ? query.sortBy : "createdAt";
+  const sortBy = query.sortBy ? query.sortBy : "startDateTime";
   const sortOrder = query.sortOrder ? query.sortOrder : "desc";
 
   const andConditions: ScheduleWhereInput[] = [
@@ -350,7 +354,12 @@ const updateSchedule = async (
   // 25 August => start Time : 9:00 PM
   // 26 August => end Time : 3:00AM
 
-  if (!isSameDay(payload.startDateTime, payload.endDateTime)) {
+  const isSameDayUTC = (d1: Date, d2: Date) =>
+    d1.getUTCFullYear() === d2.getUTCFullYear() &&
+    d1.getUTCMonth() === d2.getUTCMonth() &&
+    d1.getUTCDate() === d2.getUTCDate();
+
+  if (!isSameDay(payload.startDateTime, payload.endDateTime) && !isSameDayUTC(payload.startDateTime, payload.endDateTime)) {
     throw new AppError(
       httpStatus.CONFLICT,
       "Start Date Time And End Date Time Must Be On The Same Day"
@@ -372,6 +381,7 @@ const updateSchedule = async (
   const existingScheduleOnThisDate = await prisma.schedule.findFirst({
     where: {
       doctorId: doctor.id,
+      id: { not: schedule.id },
       isDeleted: false,
       startDateTime: {
         gte: startOfTheDay,
@@ -387,9 +397,8 @@ const updateSchedule = async (
     );
   }
 
-  const durationInMinutes = differenceInMinutes(
-    payload.startDateTime,
-    payload.endDateTime
+  const durationInMinutes = Math.abs(
+    differenceInMinutes(payload.endDateTime, payload.startDateTime)
   );
 
   const MINUTES_ALLOCATED_PER_SLOT = 20;

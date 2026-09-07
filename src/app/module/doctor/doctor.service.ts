@@ -557,7 +557,7 @@ const getAvailableDoctorByTodaySchedule = async (query: IQuery) => {
             gt: now,
           },
         },
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: { startDateTime: "asc" },
         select: {
           id: true,
           startDateTime: true,
