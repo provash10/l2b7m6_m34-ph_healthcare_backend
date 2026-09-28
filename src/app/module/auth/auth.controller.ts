@@ -7,6 +7,7 @@ import { AuthService } from "./auth.service";
 import z from "zod";
 import { PatientValidation } from "./auth.validation";
 import AppError from "../../errors/AppError";
+import config from "../../config";
 
 // const PatientRegistrationZodSchema = z.object({
 // 	name: z
@@ -65,14 +66,20 @@ const verifyPatientEmail = catchAsync(async (req: Request, res: Response) => {
 
 	res.cookie("accessToken", accessToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
 	});
 	res.cookie("refreshToken", refreshToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
 	});
 
@@ -97,14 +104,20 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
 
 	res.cookie("accessToken", accessToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
 	});
 	res.cookie("refreshToken", refreshToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
 	});
 
@@ -144,14 +157,20 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 
 	res.cookie("accessToken", accessToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
 	});
 	res.cookie("refreshToken", newRefreshToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
 	});
 
@@ -175,14 +194,20 @@ const googleLogin = catchAsync(async (req: Request, res: Response) => {
 
 	res.cookie("accessToken", accessToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24, // 24 hour or 1 day
 	});
 	res.cookie("refreshToken", refreshToken, {
 		httpOnly: true,
-		secure: false,
-		sameSite: "none",
+		// secure: false,
+		secure: config.node_env === "development"? false : true,
+		// sameSite: "none",
+		// sameSite: "lax",
+		sameSite: config.node_env === "development"? "lax" : "none",
 		maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
 	});
 
