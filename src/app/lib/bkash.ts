@@ -94,7 +94,7 @@ export const getBkashIdToken = async () => {
     //bkash id token set
     await redisClient.set(IdTokenKey,result.id_token,{
     expiration : {
-        type : "Ex",
+        type : "EX",
         value : 60 * 60  // 1 hour
     }
     })
