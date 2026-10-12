@@ -1,3 +1,4 @@
+import generateRandomPassword from "../../utils/randomPassword";
 import { UploadApiResponse } from "cloudinary";
 import { prisma } from "../../lib/prisma";
 import { cloudinary } from "../../lib/cloudinary";
@@ -150,17 +151,11 @@ const applyAsDoctor = async (
 
   console.log({ additionalFilesUploadResults });
 
-  const randomDoctorPassword = Math.random().toString(36).slice(-8);
-  const hashedPassed = await bcrypt.hash(
-    randomDoctorPassword,
-    Number(config.bcrypt_salt_rounds)
-  );
-
+  // doctorApplication
   const doctorApplication = await prisma.user.create({
     data: {
       name: userObj.name,
       email: userObj.email,
-      password: hashedPassed,
       role: Role.DOCTOR,
       needPasswordChange: true,
 
@@ -310,6 +305,20 @@ const approveDoctor = async (
     );
   }
 
+  const isApproved = verificationStatus === DoctorVerificationStatus.APPROVED;
+
+  const randomDoctorPassword = isApproved
+    ? generateRandomPassword()
+    : undefined;
+
+  if (config.node_env === "development" && randomDoctorPassword) {
+    console.log(`[dev] Random Password plain text: ${randomDoctorPassword}`);
+  }
+
+  const hashedPassword = randomDoctorPassword
+    ? await bcrypt.hash(randomDoctorPassword, Number(config.bcrypt_salt_rounds))
+    : undefined;
+
   const updatedDoctor = await prisma.doctor.update({
     where: { id: doctorId },
     data: {
@@ -320,11 +329,11 @@ const approveDoctor = async (
           : null,
       reviewedBy: reviewer.userId,
       reviewedAt: new Date(),
+      ...(hashedPassword
+        ? { user: { update: { password: hashedPassword } } }
+        : {}),
     },
-    include: { user: true },
   });
-
-  const isApproved = verificationStatus === DoctorVerificationStatus.APPROVED;
 
   const templatePath = path.join(
     process.cwd(),
@@ -338,6 +347,7 @@ const approveDoctor = async (
   const templateData = {
     name: updatedDoctor.name,
     reason: updatedDoctor.rejectionReason,
+    password: isApproved ? randomDoctorPassword : undefined,
   };
 
   const html = await ejs.renderFile(templatePath, templateData);
