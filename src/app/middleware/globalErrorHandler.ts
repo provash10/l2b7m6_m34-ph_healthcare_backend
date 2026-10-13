@@ -75,6 +75,7 @@ export const globalErrorHandler = async (
 			config.node_env === "development"
 				? errorMessage
 				: "Internal Server Error",
+		data: err?.data || undefined,
 		error: config.node_env === "development" ? err : undefined,
 		stack: config.node_env === "development" ? err.stack : undefined,
 	});

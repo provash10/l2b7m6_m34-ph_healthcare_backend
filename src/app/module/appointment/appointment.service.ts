@@ -2,6 +2,7 @@ import {
   AppointmentStatus,
   PaymentStatus,
   Role,
+  ScheduleStatus,
 } from "../../../generated/prisma/enums";
 import config from "../../config";
 import { getBkashIdToken } from "../../lib/bkash";
@@ -14,7 +15,7 @@ import crypto from "crypto";
 import AppError from "../../errors/AppError";
 import httpStatus from "http-status";
 import { IBookAppointmentPayload, ICancelAppointmentPayload, IPayAppointmentPayload, IUpdateAppointmentStatusPayload } from "./appointment.interface";
-import { addMinutes, isAfter } from "date-fns";
+import { addMinutes, isAfter, isBefore, isSameDay, subHours } from "date-fns";
 import PDFDocument from "pdfkit";
 import { IQuery } from "../../interfaces";
 import { AppointmentWhereInput } from "../../../generated/prisma/models";
@@ -81,9 +82,19 @@ const bookAppointment = async (
     });
 
     if (existingAppointment?.status === AppointmentStatus.PENDING) {
+      const existingPayment = await prisma.payment.findFirst({
+        where: { appointmentId: existingAppointment.id },
+      });
+      const paymentUrl = (existingPayment?.gatewayResponse as any)?.bkashURL;
+
       throw new AppError(
         httpStatus.BAD_REQUEST,
-        "You Already Have A Pending Appointment. Please Pay For That"
+        "You Already Have A Pending Appointment. Please Pay For That",
+        "",
+        {
+          paymentUrl,
+          appointmentId: existingAppointment.id,
+        }
       );
     }
     if (existingAppointment?.status === AppointmentStatus.CONFIRMED) {

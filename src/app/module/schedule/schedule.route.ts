@@ -42,6 +42,8 @@ router.patch(
 	ScheduleController.publishSchedule,
 );
 
+router.get("/todays-schedule", ScheduleController.getTodaysSchedules);
+
 router.get(
 	"/:scheduleId",
 	auth(Role.DOCTOR, Role.ADMIN, Role.SUPER_ADMIN),
